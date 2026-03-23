@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Prometheus & Grafana — Complete Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<style>
+:root {
+  --prom-orange: #E6522C;
+  --graf-orange: #F46800;
+  --accent: #FF6B35;
+  --accent-glow: rgba(230,82,44,0.25);
+  --green: #73BF69;
+  --blue: #5794F2;
+  --yellow: #FADE2A;
+  --purple: #B877D9;
+  --red: #F2495C;
+  --bg-deep: #0B0E13;
+  --bg-card: #111620;
+  --bg-card2: #161C28;
+  --bg-sidebar: #0D1117;
+  --border: rgba(255,255,255,0.07);
+  --border-accent: rgba(230,82,44,0.35);
+  --text-primary: #E8ECF0;
+  --text-secondary: #8B95A3;
+  --text-muted: #4A5568;
+  --code-bg: #0D1117;
+  --sidebar-w: 280px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ═══════════════ SCROLLBAR ═══════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+/* ═══════════════ PROGRESS BAR ═══════════════ */
+#progress-bar {
+  position: fixed; top: 0; left: 0; height: 3px; z-index: 9999;
+  background: linear-gradient(90deg, var(--prom-orange), var(--graf-orange));
+  width: 0%; transition: width 0.1s;
+}
+
+/* ═══════════════ SIDEBAR ═══════════════ */
+#sidebar {
+  position: fixed; top: 0; left: 0; width: var(--sidebar-w);
+  height: 100vh; background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; z-index: 100;
+  display: flex; flex-direction: column;
+}
+
+.sidebar-logo {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-badge {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--prom-orange), var(--graf-orange));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.logo-text { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 14px; }
+.logo-text span { color: var(--accent); }
+.sidebar-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+.sidebar-search {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-search input {
+  width: 100%; padding: 8px 12px; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 13px;
+  outline: none;
+}
+.sidebar-search input:focus { border-color: var(--accent); }
+.sidebar-search input::placeholder { color: var(--text-muted); }
+
+.sidebar-nav { padding: 10px 0; flex: 1; }
+
+.nav-section-label {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--text-muted); padding: 12px 20px 4px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 20px; cursor: pointer; transition: all 0.2s;
+  border-left: 3px solid transparent; text-decoration: none;
+  color: var(--text-secondary); font-size: 13px;
+}
+.nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+.nav-item.active { border-left-color: var(--accent); background: rgba(230,82,44,0.08); color: var(--text-primary); }
+.nav-num {
+  width: 20px; height: 20px; border-radius: 4px;
+  background: var(--bg-card2); font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); flex-shrink: 0;
+}
+.nav-item.active .nav-num { background: var(--accent); color: #fff; }
+
+.sidebar-footer {
+  padding: 14px 20px; border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-muted);
+}
+
+/* ═══════════════ MAIN LAYOUT ═══════════════ */
+#main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+}
+
+/* ═══════════════ TOPBAR ═══════════════ */
+#topbar {
+  position: sticky; top: 0; z-index: 90;
+  background: rgba(11,14,19,0.9); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px; height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-title { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 15px; }
+.topbar-pills { display: flex; gap: 8px; }
+.pill {
+  padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pill-orange { background: rgba(230,82,44,0.15); color: var(--prom-orange); border: 1px solid var(--border-accent); }
+.pill-blue { background: rgba(87,148,242,0.12); color: var(--blue); border: 1px solid rgba(87,148,242,0.2); }
+.pill-green { background: rgba(115,191,105,0.12); color: var(--green); border: 1px solid rgba(115,191,105,0.2); }
+
+/* ═══════════════ HERO SECTION ═══════════════ */
+.hero {
+  padding: 60px 40px 40px;
+  background: radial-gradient(ellipse 70% 50% at 60% -10%, rgba(230,82,44,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse 40% 40% at 90% 80%, rgba(244,104,0,0.06) 0%, transparent 50%);
+  border-bottom: 1px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: 0; right: 0; width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(230,82,44,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(230,82,44,0.1); border: 1px solid var(--border-accent);
+  border-radius: 20px; padding: 4px 14px; font-size: 12px;
+  color: var(--accent); font-weight: 600; margin-bottom: 20px;
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+.hero h1 {
+  font-family: 'Sora', sans-serif; font-size: 42px; font-weight: 800;
+  line-height: 1.15; margin-bottom: 16px;
+  background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-desc {
+  font-size: 16px; color: var(--text-secondary); max-width: 600px;
+  line-height: 1.7; margin-bottom: 32px;
+}
+.hero-stats {
+  display: flex; gap: 32px; flex-wrap: wrap;
+}
+.hero-stat { text-align: center; }
+.hero-stat .val {
+  font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 800;
+  color: var(--accent); display: block; line-height: 1;
+}
+.hero-stat .lbl { font-size: 12px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ═══════════════ CONTENT ═══════════════ */
+.content { padding: 0 40px 80px; max-width: 1100px; }
+
+/* ═══════════════ SECTION ═══════════════ */
+.module-section {
+  padding-top: 60px;
+}
+.module-header {
+  display: flex; align-items: flex-start; gap: 18px; margin-bottom: 36px;
+  padding-bottom: 20px; border-bottom: 1px solid var(--border);
+}
+.module-badge {
+  width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--prom-orange), var(--graf-orange));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Sora', sans-serif; font-weight: 800; font-size: 20px; color: #fff;
+  box-shadow: 0 0 24px var(--accent-glow);
+}
+.module-meta { flex: 1; }
+.module-meta h2 {
+  font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 4px;
+}
+.module-meta .module-desc { color: var(--text-secondary); font-size: 14px; }
+.module-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.tag {
+  padding: 2px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  background: var(--bg-card2); color: var(--text-muted); border: 1px solid var(--border);
+}
+
+/* ═══════════════ CARDS ═══════════════ */
+.card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px; margin-bottom: 20px;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: rgba(230,82,44,0.2); }
+.card-title {
+  font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title .icon { font-size: 16px; }
+
+.card-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 20px;
+}
+.card-grid-3 {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;
+}
+
+/* ═══════════════ METRIC TYPE CARDS ═══════════════ */
+.metric-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; position: relative; overflow: hidden; transition: all 0.2s;
+}
+.metric-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.metric-card.counter::before { background: var(--blue); }
+.metric-card.gauge::before { background: var(--green); }
+.metric-card.histogram::before { background: var(--yellow); }
+.metric-card.summary::before { background: var(--purple); }
+.metric-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+
+.metric-type-label {
+  font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+}
+.metric-card.counter .metric-type-label { color: var(--blue); }
+.metric-card.gauge .metric-type-label { color: var(--green); }
+.metric-card.histogram .metric-type-label { color: var(--yellow); }
+.metric-card.summary .metric-type-label { color: var(--purple); }
+
+.metric-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; }
+.metric-examples { font-size: 12px; color: var(--text-muted); }
+.metric-examples span { display: block; padding: 2px 0; }
+.metric-examples span::before { content: '→ '; color: var(--accent); }
+
+/* ═══════════════ DIAGRAM BLOCKS ═══════════════ */
+.diagram-block {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px; margin: 16px 0;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: #8B9BB4; line-height: 1.7; overflow-x: auto;
+  position: relative;
+}
+.diagram-block .diagram-label {
+  font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+  margin-bottom: 12px; display: block;
+}
+.diagram-block pre { white-space: pre; }
+
+/* ═══════════════ CODE BLOCKS ═══════════════ */
+.code-wrapper { position: relative; margin: 16px 0; border-radius: 10px; overflow: hidden; }
+.code-header {
+  background: #161B22; padding: 8px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--accent); text-transform: uppercase; font-weight: 600; letter-spacing: 0.8px;
+}
+.copy-btn {
+  background: var(--bg-card2); border: 1px solid var(--border);
+  color: var(--text-muted); padding: 3px 10px; border-radius: 4px;
+  font-size: 11px; cursor: pointer; transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+.copy-btn.copied { color: var(--green); border-color: var(--green); }
+.code-wrapper pre { margin: 0 !important; border-radius: 0 !important; }
+.code-wrapper pre code.hljs { border-radius: 0; font-size: 12.5px; line-height: 1.65; padding: 18px !important; }
+
+/* ═══════════════ TABLE ═══════════════ */
+.table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 10px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--bg-card2); }
+th {
+  padding: 12px 16px; text-align: left; font-family: 'Sora', sans-serif;
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--text-secondary); white-space: nowrap;
+}
+td { padding: 11px 16px; border-top: 1px solid var(--border); font-size: 13.5px; color: var(--text-secondary); }
+tr:hover td { background: rgba(255,255,255,0.02); }
+td code, th code {
+  font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+  background: var(--code-bg); padding: 2px 7px; border-radius: 4px;
+  color: var(--accent); border: 1px solid var(--border);
+}
+.badge-green { color: var(--green); font-weight: 600; }
+.badge-red { color: var(--red); font-weight: 600; }
+.badge-yellow { color: var(--yellow); font-weight: 600; }
+.badge-blue { color: var(--blue); font-weight: 600; }
+.badge-purple { color: var(--purple); font-weight: 600; }
+.badge-orange { color: var(--accent); font-weight: 600; }
+
+/* ═══════════════ CALLOUT BOXES ═══════════════ */
+.callout {
+  border-radius: 8px; padding: 14px 18px; margin: 16px 0;
+  display: flex; gap: 12px; align-items: flex-start;
+  font-size: 13.5px; line-height: 1.6;
+}
+.callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.callout-content { flex: 1; }
+.callout-content strong { display: block; font-weight: 600; margin-bottom: 4px; }
+.callout.tip { background: rgba(115,191,105,0.08); border: 1px solid rgba(115,191,105,0.2); color: #a8d5a2; }
+.callout.tip .callout-icon { color: var(--green); }
+.callout.warn { background: rgba(250,222,42,0.06); border: 1px solid rgba(250,222,42,0.2); color: #d4c06b; }
+.callout.warn .callout-icon { color: var(--yellow); }
+.callout.info { background: rgba(87,148,242,0.08); border: 1px solid rgba(87,148,242,0.2); color: #9bb8e8; }
+.callout.info .callout-icon { color: var(--blue); }
+.callout.danger { background: rgba(242,73,92,0.08); border: 1px solid rgba(242,73,92,0.2); color: #e8949e; }
+.callout.danger .callout-icon { color: var(--red); }
+.callout.lab { background: rgba(230,82,44,0.08); border: 1px solid var(--border-accent); color: #d4a090; }
+.callout.lab .callout-icon { color: var(--accent); }
+
+/* ═══════════════ SECTION HEADINGS ═══════════════ */
+h3 {
+  font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700;
+  color: var(--text-primary); margin: 32px 0 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+h3::before { content: ''; display: block; width: 4px; height: 18px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+h4 {
+  font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600;
+  color: var(--text-primary); margin: 22px 0 10px;
+}
+
+/* ═══════════════ LISTS ═══════════════ */
+ul, ol { padding-left: 0; margin: 10px 0; }
+li { padding: 5px 0 5px 24px; position: relative; font-size: 14px; color: var(--text-secondary); }
+ul li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+ol { counter-reset: item; }
+ol li { list-style: none; }
+ol li::before { content: counter(item) "."; counter-increment: item; position: absolute; left: 0; color: var(--accent); font-weight: 700; font-size: 12px; top: 6px; }
+
+p { font-size: 14px; color: var(--text-secondary); margin: 10px 0; line-height: 1.8; }
+strong { color: var(--text-primary); font-weight: 600; }
+code:not(.hljs) {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  background: var(--code-bg); border: 1px solid var(--border);
+  padding: 2px 7px; border-radius: 4px; color: #e8994d;
+}
+
+/* ═══════════════ Q&A ACCORDION ═══════════════ */
+.qa-section {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; margin: 20px 0;
+}
+.qa-header {
+  padding: 16px 20px; background: var(--bg-card2);
+  display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
+}
+.qa-header h3 { margin: 0; font-size: 15px; }
+.qa-header h3::before { display: none; }
+.qa-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+
+.qa-item { border-top: 1px solid var(--border); }
+.qa-item:first-of-type { border-top: none; }
+.qa-q {
+  width: 100%; text-align: left; background: none; border: none;
+  padding: 14px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px;
+  color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 14px;
+  font-weight: 500; transition: background 0.15s;
+}
+.qa-q:hover { background: rgba(255,255,255,0.03); }
+.qa-q-icon { width: 22px; height: 22px; border-radius: 50%; background: rgba(230,82,44,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.qa-q-icon svg { width: 10px; height: 10px; fill: var(--accent); transition: transform 0.2s; }
+.qa-item.open .qa-q-icon svg { transform: rotate(90deg); }
+.qa-a {
+  padding: 0 20px 0 54px; max-height: 0; overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s;
+}
+.qa-item.open .qa-a { max-height: 600px; padding: 0 20px 16px 54px; }
+.qa-a p { font-size: 13.5px; color: var(--text-secondary); }
+
+/* ═══════════════ WORKFLOW STEPS ═══════════════ */
+.steps { margin: 16px 0; }
+.step {
+  display: flex; gap: 16px; padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--prom-orange), var(--graf-orange));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Sora', sans-serif; font-weight: 800; font-size: 13px; color: #fff;
+}
+.step-content h4 { margin: 0 0 6px; font-size: 14px; color: var(--text-primary); }
+.step-content p { margin: 0; font-size: 13px; color: var(--text-secondary); }
+
+/* ═══════════════ PORT REFERENCE ═══════════════ */
+.port-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin: 16px 0;
+}
+.port-card {
+  background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+  transition: border-color 0.2s;
+}
+.port-card:hover { border-color: var(--border-accent); }
+.port-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--accent);
+}
+.port-name { font-size: 12px; color: var(--text-secondary); }
+
+/* ═══════════════ PROMQL QUICK REF ═══════════════ */
+.promql-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0;
+}
+.promql-card {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.promql-label {
+  padding: 6px 14px; background: var(--bg-card2); font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); border-bottom: 1px solid var(--border);
+}
+.promql-code {
+  padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: #e8994d; line-height: 1.5;
+}
+
+/* ═══════════════ ALERT FLOW PILLS ═══════════════ */
+.alert-flow {
+  display: flex; align-items: center; gap: 0; margin: 16px 0; flex-wrap: wrap;
+}
+.flow-state {
+  padding: 10px 20px; border-radius: 6px; font-family: 'Sora', sans-serif;
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.flow-state.inactive { background: rgba(75,85,99,0.3); color: #9CA3AF; border: 1px solid rgba(75,85,99,0.5); }
+.flow-state.pending  { background: rgba(250,222,42,0.12); color: var(--yellow); border: 1px solid rgba(250,222,42,0.3); }
+.flow-state.firing   { background: rgba(242,73,92,0.12); color: var(--red); border: 1px solid rgba(242,73,92,0.3); }
+.flow-arrow { padding: 0 10px; color: var(--text-muted); font-size: 18px; }
+.flow-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ═══════════════ TABS ═══════════════ */
+.tab-nav { display: flex; gap: 4px; margin: 16px 0 0; border-bottom: 1px solid var(--border); }
+.tab-btn {
+  padding: 8px 18px; background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.2s;
+}
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-btn:hover { color: var(--text-primary); }
+.tab-panel { display: none; padding: 16px 0; }
+.tab-panel.active { display: block; }
+
+/* ═══════════════ COMPARISON TABLE ═══════════════ */
+.compare-highlight { background: rgba(230,82,44,0.08); }
+
+/* ═══════════════ CHEAT SHEET ═══════════════ */
+.cheat-section {
+  background: var(--bg-card); border: 1px solid var(--border-accent);
+  border-radius: 12px; padding: 24px; margin-bottom: 20px;
+}
+.cheat-section h3::before { background: var(--graf-orange); }
+
+/* ═══════════════ DIVIDER ═══════════════ */
+.divider {
+  height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 40px 0;
+}
+
+/* ═══════════════ BACK TO TOP ═══════════════ */
+#back-top {
+  position: fixed; bottom: 28px; right: 28px; z-index: 200;
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  font-size: 18px; color: #fff;
+}
+#back-top.visible { opacity: 1; pointer-events: all; }
+#back-top:hover { transform: translateY(-3px); }
+
+/* ═══════════════ RESPONSIVE ═══════════════ */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 0px; }
+  #sidebar { transform: translateX(-280px); width: 280px; transition: transform 0.3s; }
+  #sidebar.open { transform: translateX(0); }
+  #main { margin-left: 0; }
+  .hero, .content { padding-left: 20px; padding-right: 20px; }
+  #topbar { padding: 0 20px; }
+  .promql-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 28px; }
+}
+
+/* ═══════════════ ANIMATIONS ═══════════════ */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.module-section { animation: fadeIn 0.4s ease both; }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-badge">
+      <div class="logo-icon">📊</div>
+      <div>
+        <div class="logo-text"><span>Prometheus</span> + Grafana</div>
+        <div class="sidebar-subtitle">Complete Study Notes</div>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search-input" placeholder="🔍  Search topics..." oninput="filterNav(this.value)"/>
+  </div>
+  <div class="sidebar-nav" id="sidebar-nav">
+    <div class="nav-section-label">Core Modules</div>
+    <a class="nav-item active" href="#m1"><span class="nav-num">1</span>Introduction & Fundamentals</a>
+    <a class="nav-item" href="#m2"><span class="nav-num">2</span>Metrics & Exporters</a>
+    <a class="nav-item" href="#m3"><span class="nav-num">3</span>Architecture & PromQL</a>
+    <a class="nav-item" href="#m4"><span class="nav-num">4</span>Alerting & Alertmanager</a>
+    <a class="nav-item" href="#m5"><span class="nav-num">5</span>Grafana Dashboards</a>
+    <div class="nav-section-label">Advanced</div>
+    <a class="nav-item" href="#m6"><span class="nav-num">6</span>Advanced Prometheus</a>
+    <a class="nav-item" href="#m7"><span class="nav-num">7</span>Observability & RCA</a>
+    <a class="nav-item" href="#m8"><span class="nav-num">8</span>Loki, Tempo & Cloud</a>
+    <div class="nav-section-label">Practice</div>
+    <a class="nav-item" href="#m9"><span class="nav-num">9</span>Projects & Labs</a>
+    <a class="nav-item" href="#cheatsheet"><span class="nav-num">★</span>Cheat Sheet</a>
+  </div>
+  <div class="sidebar-footer">Prometheus + Grafana Study Guide · 2024</div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="topbar-title">📊 Prometheus & Grafana — Complete Study Notes</div>
+    <div class="topbar-pills">
+      <span class="pill pill-orange">Prometheus</span>
+      <span class="pill pill-blue">Grafana</span>
+      <span class="pill pill-green">9 Modules</span>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">🎯 Observability Study Guide</div>
+    <h1>Prometheus + Grafana<br/>Complete Reference</h1>
+    <p class="hero-desc">From fundamentals to production-grade observability stacks. Covers metrics, alerting, dashboards, PromQL, Loki, Tempo, and real-world hands-on labs.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><span class="val">9</span><div class="lbl">Modules</div></div>
+      <div class="hero-stat"><span class="val">4</span><div class="lbl">Metric Types</div></div>
+      <div class="hero-stat"><span class="val">30+</span><div class="lbl">PromQL Queries</div></div>
+      <div class="hero-stat"><span class="val">2</span><div class="lbl">Full Projects</div></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+<!-- ════════════════════════════════════════════
+     MODULE 1
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="m1">
+  <div class="module-header">
+    <div class="module-badge">1</div>
+    <div class="module-meta">
+      <h2>Introduction & Fundamentals</h2>
+      <div class="module-desc">Understand monitoring vs observability, Prometheus and Grafana roles, and get your local stack running.</div>
+      <div class="module-tags">
+        <span class="tag">Monitoring</span><span class="tag">Observability</span><span class="tag">Install</span><span class="tag">Concepts</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Monitoring vs Observability</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title"><span class="icon">📡</span> Monitoring</div>
+      <p>Watching <strong>pre-defined metrics</strong> and alerting when thresholds breach. Answers <em>"Is something wrong?"</em></p>
+      <ul>
+        <li>Checks known failure modes</li>
+        <li>Dashboard & alert driven</li>
+        <li>Reactive approach</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🔬</span> Observability</div>
+      <p>Understanding the <strong>internal state</strong> from external outputs. Answers <em>"Why is something wrong?"</em></p>
+      <ul>
+        <li>Explores unknown unknowns</li>
+        <li>Metrics + Logs + Traces</li>
+        <li>Proactive approach</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The Three Pillars of Observability</h3>
+  <div class="diagram-block">
+    <span class="diagram-label">Architecture Diagram — Observability Stack</span>
+<pre>
+┌──────────────────────────────────────────────────────────────────┐
+│                      OBSERVABILITY STACK                         │
+│                                                                  │
+│   ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│   │     METRICS     │  │      LOGS       │  │     TRACES      │ │
+│   │                 │  │                 │  │                 │ │
+│   │  Numerical      │  │  Timestamped    │  │  Request path   │ │
+│   │  time-series    │  │  text events    │  │  across svcs    │ │
+│   │                 │  │                 │  │                 │ │
+│   │  Prometheus     │  │  Grafana Loki   │  │  Grafana Tempo  │ │
+│   └────────┬────────┘  └────────┬────────┘  └────────┬────────┘ │
+│            │                    │                     │          │
+│            └────────────────────┼─────────────────────┘          │
+│                                 ▼                                │
+│                       ┌──────────────────┐                       │
+│                       │    G R A F A N A │  ← Unified UI         │
+│                       └──────────────────┘                       │
+└──────────────────────────────────────────────────────────────────┘</pre>
+  </div>
+
+  <h3>What is Prometheus?</h3>
+  <p>Open-source monitoring and alerting toolkit originally built at <strong>SoundCloud (2012)</strong>, donated to <strong>CNCF in 2016</strong>. It is the de-facto standard for cloud-native/Kubernetes monitoring.</p>
+  <div class="card-grid-3">
+    <div class="card"><div class="card-title">🔄 Pull-Based</div><p>Prometheus scrapes targets — no agent push needed.</p></div>
+    <div class="card"><div class="card-title">📦 Local TSDB</div><p>Stores all data as timestamped float64 values on disk.</p></div>
+    <div class="card"><div class="card-title">🏷️ Dimensional</div><p>Key-value labels identify every time-series uniquely.</p></div>
+  </div>
+
+  <h3>What is Grafana?</h3>
+  <p>Open-source analytics and visualization platform. Connects to 40+ data sources (Prometheus, Loki, Elasticsearch, MySQL…) and renders interactive dashboards.</p>
+
+  <h3>Prometheus vs Other Tools</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Feature</th><th>Prometheus</th><th>Datadog</th><th>Nagios</th><th>InfluxDB</th></tr></thead>
+      <tbody>
+        <tr><td>Model</td><td class="badge-orange">Pull</td><td>Push/Pull</td><td>Active checks</td><td>Push</td></tr>
+        <tr><td>Storage</td><td>Local TSDB</td><td>Cloud SaaS</td><td>None</td><td>Local/Cloud</td></tr>
+        <tr><td>Query Language</td><td class="badge-orange">PromQL</td><td>Custom</td><td>None</td><td>Flux/InfluxQL</td></tr>
+        <tr><td>Cost</td><td class="badge-green">Free/OSS</td><td class="badge-red">Paid SaaS</td><td class="badge-green">Free/OSS</td><td>Free/Paid</td></tr>
+        <tr><td>K8s Native</td><td class="badge-green">✔ Yes</td><td class="badge-green">✔ Yes</td><td class="badge-red">✘ No</td><td class="badge-yellow">Partial</td></tr>
+        <tr><td>Tracing</td><td>❌ (Use Tempo)</td><td>✔ Yes</td><td>❌ No</td><td>❌ No</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>🔧 Hands-On: Install Prometheus & Grafana (Docker Compose)</h3>
+  <div class="callout lab"><span class="callout-icon">🧪</span><div class="callout-content"><strong>Lab 1.1 — Local Stack Setup</strong>Spin up a complete local monitoring stack in under 5 minutes using Docker Compose.</div></div>
+
+  <p>Create <code>docker-compose.yml</code>:</p>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml">version: "3.8"
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:</code></pre>
+  </div>
+
+  <p>Create <code>prometheus.yml</code>:</p>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml">global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']</code></pre>
+  </div>
+
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash">docker-compose up -d
+
+# Verify services
+curl http://localhost:9090/-/healthy   # Prometheus
+curl http://localhost:9100/metrics      # Node Exporter
+# Grafana → http://localhost:3000  (admin / admin)</code></pre>
+  </div>
+
+  <div class="callout tip"><span class="callout-icon">💡</span><div class="callout-content"><strong>Explore the UIs</strong>Prometheus UI: <code>/graph</code>, <code>/targets</code>, <code>/alerts</code>, <code>/rules</code><br/>Grafana: Configuration → Data Sources → Add Prometheus → URL: <code>http://prometheus:9090</code></div></div>
+
+  <!-- Q&A -->
+  <div class="qa-section">
+    <div class="qa-header"><span>❓</span><h3>Quick Revision Q&A</h3><span class="qa-badge">5 Questions</span></div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the difference between monitoring and observability?</button>
+      <div class="qa-a"><p>Monitoring tracks <strong>known failure modes</strong> via predefined metrics and alerts. Observability allows you to investigate <strong>unknown unknowns</strong> using the full telemetry data (metrics, logs, traces). Monitoring answers "Is something wrong?" while observability answers "Why is it wrong?"</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Why does Prometheus use a pull model instead of push?</button>
+      <div class="qa-a"><p>Pull gives Prometheus control — it decides when and what to scrape. This simplifies firewall rules (scraper opens outbound connections), makes it easy to detect dead targets (no scrape = target down), and centralizes configuration. Push requires agents to know where to send data.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What are the three pillars of observability?</button>
+      <div class="qa-a"><p><strong>Metrics</strong> — Numerical time-series data (Prometheus), <strong>Logs</strong> — Timestamped text events (Loki), <strong>Traces</strong> — Request journeys across services (Tempo). Grafana provides a unified view across all three.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What are the default ports for Prometheus and Grafana?</button>
+      <div class="qa-a"><p>Prometheus: <strong>9090</strong>, Grafana: <strong>3000</strong>, Node Exporter: <strong>9100</strong>, Alertmanager: <strong>9093</strong>, Pushgateway: <strong>9091</strong>.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the Prometheus data format?</button>
+      <div class="qa-a"><p>Each metric: <code>metric_name{label1="val1", label2="val2"} numeric_value [optional_timestamp]</code><br/>Example: <code>http_requests_total{method="GET", status="200"} 1234</code></p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════
+     MODULE 2
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="m2">
+  <div class="module-header">
+    <div class="module-badge">2</div>
+    <div class="module-meta">
+      <h2>Prometheus Metrics & Exporters</h2>
+      <div class="module-desc">Learn the four metric types, label cardinality, and how to collect metrics using exporters and custom instrumentation.</div>
+      <div class="module-tags">
+        <span class="tag">Counter</span><span class="tag">Gauge</span><span class="tag">Histogram</span><span class="tag">Summary</span><span class="tag">Exporters</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Prometheus Data Model</h3>
+  <p>Every metric is a <strong>time-series</strong> identified by a name + set of labels:</p>
+  <div class="diagram-block">
+    <span class="diagram-label">Data Model</span>
+<pre>
+ http_requests_total { method="GET", status="200", job="api" }  →  1234
+ │                     │                                            │
+ │                     └── Labels (key-value dimensions)           │
+ └── Metric name                                                   └── Float64 value</pre>
+  </div>
+  <div class="callout warn"><span class="callout-icon">⚠️</span><div class="callout-content"><strong>Label Cardinality Warning</strong>Each unique label combination = a new time-series in memory. Never use labels with unbounded values like <code>user_id</code>, <code>request_id</code>, or <code>session_id</code> — this causes "cardinality explosion" and OOM crashes.</div></div>
+
+  <h3>The Four Metric Types</h3>
+  <div class="card-grid">
+    <div class="metric-card counter">
+      <div class="metric-type-label">Counter</div>
+      <div class="metric-desc">Monotonically <strong>increasing-only</strong> value. Resets to 0 on restart. Always use with <code>rate()</code> or <code>increase()</code>.</div>
+      <div class="metric-examples">
+        <span>http_requests_total</span>
+        <span>errors_total</span>
+        <span>bytes_sent_total</span>
+      </div>
+    </div>
+    <div class="metric-card gauge">
+      <div class="metric-type-label">Gauge</div>
+      <div class="metric-desc">Can go <strong>up or down</strong>. Represents a current snapshot of a value. Use directly in queries.</div>
+      <div class="metric-examples">
+        <span>node_memory_MemAvailable_bytes</span>
+        <span>active_connections</span>
+        <span>temperature_celsius</span>
+      </div>
+    </div>
+    <div class="metric-card histogram">
+      <div class="metric-type-label">Histogram</div>
+      <div class="metric-desc">Samples observations into <strong>configurable buckets</strong>. Enables server-side aggregation. Use <code>histogram_quantile()</code>.</div>
+      <div class="metric-examples">
+        <span>http_request_duration_seconds</span>
+        <span>request_size_bytes</span>
+      </div>
+    </div>
+    <div class="metric-card summary">
+      <div class="metric-type-label">Summary</div>
+      <div class="metric-desc">Pre-calculates <strong>client-side quantiles</strong>. Accurate per-instance but <em>cannot</em> be aggregated across instances.</div>
+      <div class="metric-examples">
+        <span>rpc_duration_seconds</span>
+        <span>go_gc_duration_seconds</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Histogram vs Summary — Quick Comparison</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Feature</th><th>Histogram</th><th>Summary</th></tr></thead>
+      <tbody>
+        <tr><td>Quantile calculation</td><td>Server-side (PromQL)</td><td>Client-side</td></tr>
+        <tr><td>Aggregatable across instances</td><td class="badge-green">✔ Yes</td><td class="badge-red">✘ No</td></tr>
+        <tr><td>Accuracy</td><td>Approximate</td><td>Exact</td></tr>
+        <tr><td>Config buckets at</td><td>Collection time</td><td>Collection time</td></tr>
+        <tr class="compare-highlight"><td><strong>Preferred?</strong></td><td class="badge-green">✔ Usually preferred</td><td>Single-instance only</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Exporters</h3>
+  <div class="diagram-block">
+    <span class="diagram-label">Exporter Pattern</span>
+<pre>
+  ┌──────────────────┐     ┌──────────────────────┐     ┌──────────────────┐
+  │   Target System  │────▶│      Exporter        │◀────│ Prometheus Server│
+  │  (MySQL, Linux…) │     │  /metrics endpoint   │     │   (scrapes)      │
+  └──────────────────┘     └──────────────────────┘     └──────────────────┘
+   Native metrics           Prometheus format             Stores & queries</pre>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab(this,'tab-node')">Node Exporter</button>
+    <button class="tab-btn" onclick="showTab(this,'tab-cadvisor')">cAdvisor</button>
+    <button class="tab-btn" onclick="showTab(this,'tab-db')">Database</button>
+    <button class="tab-btn" onclick="showTab(this,'tab-custom')">Custom App</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-node">
+    <p>Exposes <strong>Linux/macOS system metrics</strong> — CPU, memory, disk, network, filesystem.</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code class="language-bash"># Run Node Exporter via Docker
+docker run -d \
+  --name=node-exporter \
+  --net=host \
+  --pid=host \
+  -v /:/host:ro,rslave \
+  prom/node-exporter \
+  --path.rootfs=/host
+
+# Key metrics:
+# node_cpu_seconds_total{mode="idle"}    → CPU by mode
+# node_memory_MemAvailable_bytes         → Free RAM
+# node_filesystem_avail_bytes            → Free disk
+# node_network_receive_bytes_total       → Network RX
+# node_load1 / node_load5 / node_load15  → Load averages</code></pre>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-cadvisor">
+    <p>Exposes <strong>Docker container metrics</strong> — per-container CPU, memory, network, filesystem.</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code class="language-bash">docker run -d \
+  --name=cadvisor \
+  --volume=/:/rootfs:ro \
+  --volume=/var/run:/var/run:rw \
+  --volume=/sys:/sys:ro \
+  --volume=/var/lib/docker/:/var/lib/docker:ro \
+  -p 8080:8080 \
+  gcr.io/cadvisor/cadvisor:latest
+
+# Key metrics:
+# container_cpu_usage_seconds_total{name="my_container"}
+# container_memory_usage_bytes
+# container_network_receive_bytes_total</code></pre>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-db">
+    <p>Exposes <strong>database-specific metrics</strong> — queries, connections, replication lag.</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code class="language-bash"># MySQL Exporter
+docker run -d -p 9104:9104 \
+  -e DATA_SOURCE_NAME="user:password@(mysql:3306)/" \
+  prom/mysqld-exporter
+
+# PostgreSQL Exporter
+docker run -d -p 9187:9187 \
+  -e DATA_SOURCE_NAME="postgresql://user:pass@postgres:5432/db?sslmode=disable" \
+  prometheuscommunity/postgres-exporter
+
+# Key MySQL metrics:
+# mysql_global_status_queries
+# mysql_global_status_connections
+# mysql_global_status_slow_queries</code></pre>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-custom">
+    <p>Instrument your own app using <strong>Prometheus client libraries</strong>.</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code class="language-python">from prometheus_client import Counter, Gauge, Histogram, start_http_server
+import time, random
+
+# Define metrics
+REQUEST_COUNT = Counter('app_requests_total', 'Total requests',
+                        ['method', 'endpoint', 'status'])
+ACTIVE_USERS  = Gauge('app_active_users', 'Active users')
+REQUEST_LAT   = Histogram('app_request_duration_seconds', 'Latency',
+                          ['endpoint'],
+                          buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 5.0])
+
+if __name__ == '__main__':
+    start_http_server(8000)   # Expose /metrics on :8000
+    ACTIVE_USERS.set(100)
+    while True:
+        start = time.time()
+        time.sleep(random.uniform(0.01, 0.3))
+        REQUEST_COUNT.labels('GET', '/api/users', '200').inc()
+        REQUEST_LAT.labels('/api/users').observe(time.time() - start)</code></pre>
+    </div>
+  </div>
+
+  <!-- Q&A -->
+  <div class="qa-section">
+    <div class="qa-header"><span>❓</span><h3>Quick Revision Q&A</h3><span class="qa-badge">5 Questions</span></div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>When should you use a Counter vs a Gauge?</button>
+      <div class="qa-a"><p>Use <strong>Counter</strong> for things that only ever increase — request count, error count, bytes sent. Use <strong>Gauge</strong> for values that can go up or down — memory usage, active connections, temperature.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Why should you avoid high-cardinality labels?</button>
+      <div class="qa-a"><p>Each unique label combination creates a new time-series stored in RAM. Labels like <code>user_id</code> with millions of unique values create millions of series — causing "cardinality explosion" that exhausts Prometheus memory and crashes it.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What does a Histogram actually store?</button>
+      <div class="qa-a"><p>A Histogram creates three sets of time-series: <strong>_bucket{le="..."}</strong> cumulative counts per bucket, <strong>_sum</strong> sum of all observations, and <strong>_count</strong> total observation count. Quantiles are computed server-side using <code>histogram_quantile()</code>.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is an exporter?</button>
+      <div class="qa-a"><p>A separate process that translates metrics from a system that doesn't natively speak Prometheus format (e.g., Linux OS, MySQL) into the Prometheus text exposition format at a <code>/metrics</code> HTTP endpoint for Prometheus to scrape.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What port does Node Exporter expose metrics on?</button>
+      <div class="qa-a"><p><strong>9100</strong>. The metrics are available at <code>http://host:9100/metrics</code>.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════
+     MODULE 3
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="m3">
+  <div class="module-header">
+    <div class="module-badge">3</div>
+    <div class="module-meta">
+      <h2>Prometheus Architecture & PromQL</h2>
+      <div class="module-desc">Deep-dive into Prometheus components, the scrape lifecycle, TSDB storage, and writing powerful PromQL queries.</div>
+      <div class="module-tags"><span class="tag">Architecture</span><span class="tag">PromQL</span><span class="tag">TSDB</span><span class="tag">Recording Rules</span></div>
+    </div>
+  </div>
+
+  <h3>Full Architecture Diagram</h3>
+  <div class="diagram-block">
+    <span class="diagram-label">Prometheus Full Architecture</span>
+<pre>
+ ┌───────────────────────────────────────────────────────────────────┐
+ │                        SERVICE DISCOVERY                          │
+ │        Kubernetes │ Consul │ EC2 │ DNS │ Static Files             │
+ └──────────────────────────────┬────────────────────────────────────┘
+                                │ discovers targets
+                                ▼
+ ┌───────────────────────────────────────────────────────────────────┐
+ │                        PROMETHEUS SERVER                          │
+ │                                                                   │
+ │   ┌───────────────┐    ┌─────────────────┐    ┌───────────────┐   │
+ │   │   Retrieval   │    │      TSDB       │    │  HTTP Server  │   │
+ │   │   (Scraper)   │───▶│   (Storage)     │    │  PromQL API   │   │
+ │   │               │    │                 │    │               │   │
+ │   │  HTTP GET     │    │  Local on-disk  │    │  /query       │   │
+ │   │  /metrics     │    │  time-series DB │    │  /targets     │   │
+ │   │  every 15s    │    │  (blocks+WAL)   │    │  /alerts      │   │
+ │   └───────────────┘    └─────────────────┘    └───────────────┘   │
+ │                                                                   │
+ │   ┌───────────────┐                           ┌───────────────┐   │
+ │   │  Rules Engine │──────── fire alerts ─────▶│ Alertmanager  │   │
+ │   │  (eval rules) │                           └───────────────┘   │
+ │   └───────────────┘                                               │
+ └───────────────────────────────────────────────────────────────────┘
+         ▲                                    ▲
+  ┌──────┴──────────────┐          ┌──────────┴──────────┐
+  │     EXPORTERS       │          │    PUSHGATEWAY      │
+  │  Node / cAdvisor    │          │  Short-lived jobs   │
+  │  MySQL / Custom App │          │  push here          │
+  └─────────────────────┘          └─────────────────────┘</pre>
+  </div>
+
+  <h3>Scrape Configuration</h3>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml">global:
+  scrape_interval: 15s          # Default scrape interval
+  scrape_timeout: 10s           # Per-scrape timeout
+  evaluation_interval: 15s      # Rule evaluation interval
+
+scrape_configs:
+  - job_name: 'web-servers'
+    scrape_interval: 30s        # Override for this job
+    metrics_path: /metrics      # Default path
+    scheme: http
+
+    static_configs:
+      - targets:
+          - 'web1.example.com:9100'
+          - 'web2.example.com:9100'
+        labels:
+          environment: production
+          team: platform
+
+  # Kubernetes auto-discovery
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: 'true'</code></pre>
+  </div>
+
+  <h3>PromQL — Prometheus Query Language</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Type</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Instant Vector</strong></td><td>Single-point time-series set</td><td><code>http_requests_total</code></td></tr>
+        <tr><td><strong>Range Vector</strong></td><td>Series over a time window</td><td><code>http_requests_total[5m]</code></td></tr>
+        <tr><td><strong>Scalar</strong></td><td>Single numeric float</td><td><code>3.14</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Essential PromQL Functions</h3>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">promql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># ── RATE FUNCTIONS ──────────────────────────────────
+rate(http_requests_total[5m])     # Avg per-second rate (smoothed for graphs)
+irate(http_requests_total[5m])    # Instantaneous rate (spike-sensitive)
+increase(http_requests_total[1h]) # Total increase over window
+
+# ── AGGREGATION ──────────────────────────────────────
+sum(rate(http_requests_total[5m]))                     # Total across all
+sum by (job, status) (rate(http_requests_total[5m]))   # Keep job + status labels
+sum without (instance) (rate(http_requests_total[5m])) # Drop instance label
+
+# ── OTHER AGGREGATORS ────────────────────────────────
+avg by (job) (node_cpu_seconds_total)
+max by (instance) (node_memory_usage_bytes)
+count by (job) (up)       # How many targets per job
+
+# ── HISTOGRAM QUANTILE ───────────────────────────────
+histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))</code></pre>
+  </div>
+
+  <h3>Practical PromQL — Ready to Use</h3>
+  <div class="promql-grid">
+    <div class="promql-card"><div class="promql-label">CPU Usage %</div><div class="promql-code">100 - (avg by(instance)(rate(<br/>  node_cpu_seconds_total{mode="idle"}[5m])) * 100)</div></div>
+    <div class="promql-card"><div class="promql-label">Memory Usage %</div><div class="promql-code">(1-(node_memory_MemAvailable_bytes /<br/>  node_memory_MemTotal_bytes)) * 100</div></div>
+    <div class="promql-card"><div class="promql-label">Disk Usage %</div><div class="promql-code">100 - (node_filesystem_avail_bytes{mountpoint="/"} /<br/>  node_filesystem_size_bytes{mountpoint="/"} * 100)</div></div>
+    <div class="promql-card"><div class="promql-label">HTTP Error Rate %</div><div class="promql-code">sum(rate(http_requests_total{status=~"5.."}[5m])) /<br/>  sum(rate(http_requests_total[5m])) * 100</div></div>
+    <div class="promql-card"><div class="promql-label">P95 Latency</div><div class="promql-code">histogram_quantile(0.95,<br/>  sum by(le)(rate(http_request_duration_seconds_bucket[5m])))</div></div>
+    <div class="promql-card"><div class="promql-label">Targets Down</div><div class="promql-code">up == 0</div></div>
+    <div class="promql-card"><div class="promql-label">HTTP Request Rate</div><div class="promql-code">sum by(job)(rate(http_requests_total[5m]))</div></div>
+    <div class="promql-card"><div class="promql-label">Network RX Rate</div><div class="promql-code">rate(node_network_receive_bytes_total{<br/>  device!="lo"}[5m])</div></div>
+  </div>
+
+  <h3>Recording Rules</h3>
+  <p>Pre-compute expensive PromQL expressions and save as new metrics — dramatically speeds up dashboards.</p>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml"># rules/recording_rules.yml
+groups:
+  - name: http_metrics
+    interval: 30s
+    rules:
+      # Pre-compute request rate per job
+      - record: job:http_requests:rate5m
+        expr: sum by (job) (rate(http_requests_total[5m]))
+
+      # Pre-compute CPU utilisation per instance
+      - record: instance:node_cpu_utilisation:rate5m
+        expr: |
+          100 - (avg by (instance) (
+            rate(node_cpu_seconds_total{mode="idle"}[5m])
+          ) * 100)
+
+      # Pre-compute memory utilisation ratio
+      - record: instance:node_memory_utilisation
+        expr: |
+          1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)</code></pre>
+  </div>
+
+  <div class="callout tip"><span class="callout-icon">💡</span><div class="callout-content"><strong>Recording Rule Naming Convention</strong>Format: <code>level:metric:operations</code> — e.g. <code>job:http_requests:rate5m</code> means aggregated by job, from metric http_requests, using rate over 5m.</div></div>
+
+  <!-- Q&A -->
+  <div class="qa-section">
+    <div class="qa-header"><span>❓</span><h3>Quick Revision Q&A</h3><span class="qa-badge">5 Questions</span></div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the difference between rate() and irate()?</button>
+      <div class="qa-a"><p><code>rate()</code> averages over the entire range window — smoother, good for trend graphs and alerts. <code>irate()</code> uses only the last two data points — more sensitive to spikes, better for detecting sudden bursts.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What are recording rules and why use them?</button>
+      <div class="qa-a"><p>Recording rules pre-compute PromQL expressions on a schedule and store results as new metrics. They massively speed up Grafana dashboards that repeatedly execute the same complex query, reducing both query time and Prometheus CPU load.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How does Prometheus store data?</button>
+      <div class="qa-a"><p>Data is first written to a <strong>Write-Ahead Log (WAL)</strong> in memory. It gets compacted into 2-hour data <strong>blocks</strong> on disk. Each block has chunks (compressed data), an index, and metadata. Default retention is 15 days.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What does sum by (job) do in PromQL?</button>
+      <div class="qa-a"><p>It aggregates all time-series matching the query into one series per unique <code>job</code> label value, dropping all other labels. Useful for getting per-service totals.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Write a PromQL query for P99 HTTP latency.</button>
+      <div class="qa-a"><p><code>histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))</code><br/>This computes the 99th percentile latency across all instances in the last 5 minutes.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════
+     MODULE 4
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="m4">
+  <div class="module-header">
+    <div class="module-badge">4</div>
+    <div class="module-meta">
+      <h2>Alerting & Alertmanager</h2>
+      <div class="module-desc">Create alert rules in Prometheus and route, group, silence, and deliver notifications through Alertmanager.</div>
+      <div class="module-tags"><span class="tag">Alerts</span><span class="tag">Alertmanager</span><span class="tag">Slack</span><span class="tag">PagerDuty</span><span class="tag">Silences</span></div>
+    </div>
+  </div>
+
+  <h3>Alert States</h3>
+  <div class="alert-flow">
+    <div><div class="flow-state inactive">INACTIVE</div><div class="flow-desc">Condition not met</div></div>
+    <div class="flow-arrow">→</div>
+    <div><div class="flow-state pending">PENDING</div><div class="flow-desc">Condition met, waiting <code>for</code> duration</div></div>
+    <div class="flow-arrow">→</div>
+    <div><div class="flow-state firing">FIRING</div><div class="flow-desc">Alert sent to Alertmanager</div></div>
+  </div>
+  <div class="callout info"><span class="callout-icon">ℹ️</span><div class="callout-content"><strong>Why the PENDING state?</strong>The <code>for</code> clause prevents false positives from transient spikes. An alert only fires after the condition has been true for the entire duration — e.g. <code>for: 5m</code> means CPU must be above threshold for 5 solid minutes.</div></div>
+
+  <h3>Alertmanager Architecture</h3>
+  <div class="diagram-block">
+    <span class="diagram-label">Alertmanager Processing Pipeline</span>
+<pre>
+  Prometheus
+  ────────────▶  ALERTMANAGER
+                    │
+                    ├─▶ GROUPING      → Bundle related alerts (e.g. 20 nodes → 1 message)
+                    │     group_by: [alertname, cluster]
+                    │     group_wait: 30s
+                    │     group_interval: 5m
+                    │
+                    ├─▶ ROUTING       → Match alerts to receivers
+                    │     severity=critical → PagerDuty
+                    │     team=platform    → Slack #platform
+                    │
+                    ├─▶ SILENCING     → Mute alerts during maintenance
+                    │
+                    ├─▶ INHIBITION    → Suppress child alerts when parent fires
+                    │     critical alert firing → suppress warning for same instance
+                    │
+                    └─▶ RECEIVERS
+                          Email │ Slack │ PagerDuty │ OpsGenie │ Webhook</pre>
+  </div>
+
+  <h3>Alert Rules (prometheus.yml / rules file)</h3>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml">groups:
+  - name: system_alerts
+    rules:
+
+      # CPU spike alert
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (
+            rate(node_cpu_seconds_total{mode="idle"}[5m])
+          ) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High CPU on {{ $labels.instance }}"
+          description: "CPU is {{ $value | printf \"%.1f\" }}% on {{ $labels.instance }}"
+          runbook_url: "https://wiki.example.com/runbooks/high-cpu"
+
+      # Service down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} is DOWN"
+          description: "Target {{ $labels.instance }} has been down for 1+ minutes"
+
+      # High error rate
+      - alert: HighHTTPErrorRate
+        expr: |
+          sum by (job) (rate(http_requests_total{status=~"5.."}[5m])) /
+          sum by (job) (rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate for {{ $labels.job }}"
+          description: "Error rate is {{ $value | humanizePercentage }}"</code></pre>
+  </div>
+
+  <h3>Alertmanager Configuration</h3>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml">global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'slack-general'
+  group_by: ['alertname', 'cluster']
+  group_wait: 30s       # Wait 30s to batch alerts
+  group_interval: 5m    # Wait 5m between group notifications
+  repeat_interval: 4h   # Re-send if still firing after 4h
+
+  routes:
+    - match:
+        severity: critical
+      receiver: 'pagerduty-critical'
+    - match:
+        team: platform
+      receiver: 'slack-platform'
+
+receivers:
+  - name: 'slack-general'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/TOKEN/TOKEN/TOKEN'
+        channel: '#monitoring'
+        title: '{{ .Status | toUpper }} - {{ .CommonAnnotations.summary }}'
+        text: '{{ .CommonAnnotations.description }}'
+        send_resolved: true
+
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - routing_key: 'YOUR_ROUTING_KEY'
+        description: '{{ .CommonAnnotations.summary }}'
+
+inhibit_rules:
+  # Suppress warning when critical is firing for same instance
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: ['alertname', 'instance']</code></pre>
+  </div>
+
+  <div class="callout lab"><span class="callout-icon">🧪</span><div class="callout-content"><strong>Lab 4.1 — Set Up Slack Alerts</strong>1. Create a Slack Incoming Webhook<br/>2. Add webhook URL to <code>alertmanager.yml</code><br/>3. Run: <code>docker run -p 9093:9093 -v $(pwd)/alertmanager.yml:/etc/alertmanager/alertmanager.yml prom/alertmanager</code><br/>4. Stress your CPU: <code>stress --cpu 4 --timeout 60s</code><br/>5. Watch the alert arrive in Slack within 5 minutes.</div></div>
+
+  <!-- Q&A -->
+  <div class="qa-section">
+    <div class="qa-header"><span>❓</span><h3>Quick Revision Q&A</h3><span class="qa-badge">5 Questions</span></div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the difference between PENDING and FIRING alert states?</button>
+      <div class="qa-a"><p><strong>PENDING</strong>: The alert condition is currently true but hasn't lasted the <code>for</code> duration yet — no notification sent. <strong>FIRING</strong>: The condition has been true for the full duration — Alertmanager receives the alert and sends notifications.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What does grouping do in Alertmanager?</button>
+      <div class="qa-a"><p>Bundles multiple related alerts into a single notification. E.g., if 20 nodes go down simultaneously, you receive 1 Slack message instead of 20. Controlled by <code>group_by</code>, <code>group_wait</code>, and <code>group_interval</code>.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is inhibition?</button>
+      <div class="qa-a"><p>A rule that suppresses lower-priority alerts when a higher-priority alert fires for the same target. E.g., suppress a "disk space warning" if "node is completely down" is already firing for the same instance — reduces noise.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How do you create a silence?</button>
+      <div class="qa-a"><p>Via the Alertmanager UI at <code>http://alertmanager:9093</code> → New Silence, or via API: <code>POST /api/v1/silences</code> with matchers, start/end time, and a comment. Silences mute alerts matching specified label matchers — used during maintenance windows.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>On what port does Alertmanager run?</button>
+      <div class="qa-a"><p><strong>9093</strong>. The UI is at <code>http://alertmanager:9093</code> and the API at <code>http://alertmanager:9093/api/v1/</code>.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════
+     MODULE 5
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="m5">
+  <div class="module-header">
+    <div class="module-badge">5</div>
+    <div class="module-meta">
+      <h2>Grafana Dashboards</h2>
+      <div class="module-desc">Build production-grade dashboards, use variables for dynamic filtering, and combine multiple data sources in one view.</div>
+      <div class="module-tags"><span class="tag">Dashboards</span><span class="tag">Panels</span><span class="tag">Variables</span><span class="tag">Alerting</span><span class="tag">Templating</span></div>
+    </div>
+  </div>
+
+  <h3>Connecting Grafana to Prometheus</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><h4>Open Data Sources</h4><p>Go to <strong>Configuration → Data Sources → Add data source</strong></p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content"><h4>Select Prometheus</h4><p>Choose "Prometheus" from the list of available sources</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><h4>Set URL</h4><p>Enter <code>http://prometheus:9090</code> (or your Prometheus host)</p></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-content"><h4>Save & Test</h4><p>Click <strong>Save & Test</strong> — should show "Data source is working"</p></div></div>
+  </div>
+
+  <h3>Panel Types Reference</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Panel Type</th><th>Best For</th><th>Example Use</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Time series</strong></td><td>Trends over time</td><td>CPU usage, request rate</td></tr>
+        <tr><td><strong>Stat</strong></td><td>Single current value (large)</td><td>Uptime, active connections</td></tr>
+        <tr><td><strong>Gauge</strong></td><td>Value relative to min/max range</td><td>Memory % (0-100)</td></tr>
+        <tr><td><strong>Bar chart</strong></td><td>Category comparison</td><td>Requests per service</td></tr>
+        <tr><td><strong>Table</strong></td><td>Detailed multi-column data</td><td>Top slow queries</td></tr>
+        <tr><td><strong>Heatmap</strong></td><td>Distribution over time</td><td>Request latency histogram</td></tr>
+        <tr><td><strong>Pie chart</strong></td><td>Proportional breakdown</td><td>HTTP status code split</td></tr>
+        <tr><td><strong>Logs</strong></td><td>Loki log streams</td><td>Application log viewer</td></tr>
+        <tr><td><strong>Traces</strong></td><td>Distributed traces (Tempo)</td><td>Service dependency map</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Dashboard Build — System Overview</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">📈 Panel 1: CPU Usage</div>
+      <p><strong>Type:</strong> Time series | <strong>Unit:</strong> Percent (0-100)</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">promql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">100 - (avg by (instance) (
+  rate(node_cpu_seconds_total{mode="idle"}[5m])
+) * 100)</code></pre></div>
+    </div>
+    <div class="card">
+      <div class="card-title">💾 Panel 2: Memory Usage</div>
+      <p><strong>Type:</strong> Gauge | <strong>Thresholds:</strong> 80% → yellow, 90% → red</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">promql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">(1 - (node_memory_MemAvailable_bytes /
+  node_memory_MemTotal_bytes)) * 100</code></pre></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Panel 3: P95 Latency</div>
+      <p><strong>Type:</strong> Stat | <strong>Unit:</strong> seconds | <strong>Color:</strong> threshold-based</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">promql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">histogram_quantile(0.95,
+  sum by (le) (
+    rate(http_request_duration_seconds_bucket[5m])
+  ))</code></pre></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🌐 Panel 4: Network I/O</div>
+      <p><strong>Type:</strong> Time series | <strong>Tip:</strong> Negate TX to show butterfly chart</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">promql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># A - Receive
+rate(node_network_receive_bytes_total{device!="lo"}[5m])
+# B - Transmit (negated)
+-rate(node_network_transmit_bytes_total{device!="lo"}[5m])</code></pre></div>
+    </div>
+  </div>
+
+  <h3>Variables & Templating</h3>
+  <div class="card">
+    <div class="card-title">🔧 Create a $job Variable</div>
+    <p>Dashboard Settings → Variables → Add variable</p>
+    <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml">Name:          job
+Type:          Query
+Data source:   Prometheus
+Query:         label_values(up, job)
+Multi-value:   true
+Include All:   true
+Refresh:       On Dashboard Load</code></pre></div>
+    <p>Use in queries: <code>rate(http_requests_total{job=~"$job"}[5m])</code></p>
+  </div>
+
+  <h3>Import Pre-Built Community Dashboards</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dashboard ID</th><th>Name</th><th>Data Source</th></tr></thead>
+      <tbody>
+        <tr><td class="badge-orange">1860</td><td>Node Exporter Full</td><td>Prometheus + Node Exporter</td></tr>
+        <tr><td class="badge-orange">893</td><td>Docker monitoring (cAdvisor)</td><td>Prometheus + cAdvisor</td></tr>
+        <tr><td class="badge-orange">3662</td><td>Prometheus 2.0 Overview</td><td>Prometheus</td></tr>
+        <tr><td class="badge-orange">7249</td><td>Kubernetes Cluster</td><td>Prometheus</td></tr>
+        <tr><td class="badge-orange">11159</td><td>Node Exporter by rfmoz</td><td>Prometheus + Node Exporter</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Go to <strong>Dashboard → Import → Enter ID</strong> above → Load → Select data source → Import.</p>
+
+  <!-- Q&A -->
+  <div class="qa-section">
+    <div class="qa-header"><span>❓</span><h3>Quick Revision Q&A</h3><span class="qa-badge">5 Questions</span></div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is a Grafana variable?</button>
+      <div class="qa-a"><p>A dynamic value (like <code>$job</code> or <code>$instance</code>) that users select from a dropdown at the top of the dashboard. It filters all panels using that variable — making one dashboard work for dozens of services without duplicating panels or editing queries.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the difference between Grafana alerting and Alertmanager?</button>
+      <div class="qa-a"><p>Prometheus/Alertmanager alerting evaluates PromQL and is more powerful for routing, grouping, inhibition, silences. <strong>Grafana alerting</strong> evaluates queries against any data source (including non-Prometheus) and routes directly to contact points — better for multi-data-source alerts.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Which panel type should you use for a single large current value?</button>
+      <div class="qa-a"><p>Use <strong>Stat</strong> panel for displaying a single prominent number (with optional color background based on thresholds). Use <strong>Gauge</strong> if you want to show the value in context of a range (e.g., memory at 75% of 100%).</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How do you import a community dashboard?</button>
+      <div class="qa-a"><p>Dashboards → Import → Enter the dashboard ID number (e.g. <strong>1860</strong> for Node Exporter Full) → Load → Select your Prometheus data source → Import. Pre-built dashboards save hours of panel configuration.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How do you show both RX and TX on the same network panel?</button>
+      <div class="qa-a"><p>Use two queries: RX as a positive value, and TX negated (multiplied by -1). This creates a "butterfly chart" where RX goes up and TX goes down, making it easy to visually distinguish both directions.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════
+     MODULE 6
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="m6">
+  <div class="module-header">
+    <div class="module-badge">6</div>
+    <div class="module-meta">
+      <h2>Advanced Prometheus</h2>
+      <div class="module-desc">Scale Prometheus with federation and HA, handle short-lived jobs with Pushgateway, and optimize for performance.</div>
+      <div class="module-tags"><span class="tag">Federation</span><span class="tag">HA</span><span class="tag">Pushgateway</span><span class="tag">Thanos</span><span class="tag">Performance</span></div>
+    </div>
+  </div>
+
+  <h3>Federation — Multi-Datacenter Hierarchy</h3>
+  <div class="diagram-block">
+    <span class="diagram-label">Prometheus Federation Architecture</span>
+<pre>
+         ┌─────────────────────────────┐
+         │   Global Prometheus (Top)   │
+         │   Scrapes aggregated        │
+         │   metrics from below        │
+         └────────────┬────────────────┘
+                      │ /federate endpoint
+        ┌─────────────┼─────────────────┐
+        ▼             ▼                 ▼
+ ┌────────────┐ ┌────────────┐  ┌────────────┐
+ │ Prometheus │ │ Prometheus │  │ Prometheus │
+ │  DC-East   │ │  DC-West   │  │  DC-EU     │
+ └─────┬──────┘ └─────┬──────┘  └─────┬──────┘
+  [apps/k8s]     [apps/k8s]       [apps/k8s]</pre>
+  </div>
+
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml — Global Prometheus federation scrape config</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml">scrape_configs:
+  - job_name: 'federate'
+    scrape_interval: 15s
+    honor_labels: true    # Preserve labels from source Prometheus
+    metrics_path: '/federate'
+    params:
+      match[]:
+        - '{job="kubernetes-pods"}'   # Only pull these metrics
+        - '{__name__=~"job:.*"}'      # Or recording rules
+    static_configs:
+      - targets:
+          - 'prometheus-dc-east:9090'
+          - 'prometheus-dc-west:9090'</code></pre>
+  </div>
+
+  <h3>Pushgateway — Short-Lived Jobs</h3>
+  <div class="diagram-block">
+    <span class="diagram-label">Pushgateway Pattern</span>
+<pre>
+  ┌──────────────────┐  push metrics  ┌─────────────────┐  scrape  ┌────────────────┐
+  │   Batch Job      │───────────────▶│  Pushgateway    │─────────▶│  Prometheus    │
+  │  (runs & exits   │                │  :9091          │          │  Server        │
+  │   in 10 seconds) │                │  Stores last    │          └────────────────┘
+  └──────────────────┘                │  known values   │
+                                      └─────────────────┘</pre>
+  </div>
+
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-python">from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
+import time
+
+registry = CollectorRegistry()
+duration = Gauge('backup_duration_seconds', 'Backup job duration', registry=registry)
+success  = Gauge('backup_last_success_timestamp_seconds', 'Last success', registry=registry)
+
+start = time.time()
+# ... run backup job ...
+duration.set(time.time() - start)
+success.set(time.time())
+
+push_to_gateway('localhost:9091', job='backup_job', registry=registry)</code></pre>
+  </div>
+
+  <div class="callout warn"><span class="callout-icon">⚠️</span><div class="callout-content"><strong>Pushgateway Caution</strong>Pushgateway is NOT a general push pipeline. Use it only for batch/cron jobs. It can persist stale metrics if a job fails silently. Always clean up old metrics with <code>DELETE /metrics/job/{name}</code>.</div></div>
+
+  <h3>Thanos — Long-term Storage & Global View</h3>
+  <div class="card-grid-3">
+    <div class="card"><div class="card-title">🌍 Global Query</div><p>Query across all Prometheus instances with a single endpoint.</p></div>
+    <div class="card"><div class="card-title">♾️ Unlimited Retention</div><p>Stores data in S3/GCS/Azure Blob — no local storage limits.</p></div>
+    <div class="card"><div class="card-title">🔁 Deduplication</div><p>Removes duplicate metrics from HA Prometheus pairs.</p></div>
+  </div>
+
+  <h3>Best Practices for Prometheus Performance</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Area</th><th>Best Practice</th></tr></thead>
+      <tbody>
+        <tr><td>Scrape interval</td><td>Don't go below 10s; 15s is optimal for most workloads</td></tr>
+        <tr><td>Cardinality</td><td>Avoid high-cardinality labels; audit with <code>tsdb analyze</code></td></tr>
+        <tr><td>Recording rules</td><td>Use for any query repeated in dashboards or alerts</td></tr>
+        <tr><td>Retention</td><td>Set <code>--storage.tsdb.retention.time=15d</code> (default) or by size</td></tr>
+        <tr><td>WAL compression</td><td>Enable <code>--storage.tsdb.wal-compression</code> (~50% savings)</td></tr>
+        <tr><td>Memory</td><td>~1-2 bytes/sample; plan for peak ingestion rate × retention</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Q&A -->
+  <div class="qa-section">
+    <div class="qa-header"><span>❓</span><h3>Quick Revision Q&A</h3><span class="qa-badge">4 Questions</span></div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is Prometheus Federation?</button>
+      <div class="qa-a"><p>A mechanism where a higher-level "global" Prometheus scrapes aggregated or filtered metrics from lower-level Prometheus instances via the <code>/federate</code> endpoint. Used for multi-datacenter monitoring and global aggregation.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>When should you use Pushgateway?</button>
+      <div class="qa-a"><p>Only for <strong>short-lived jobs</strong> (cron jobs, batch scripts, CI/CD steps) that finish before Prometheus would scrape them. Don't use it as a general push endpoint or event pipeline — Prometheus' pull model is preferred when possible.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is Thanos and why use it?</button>
+      <div class="qa-a"><p>Thanos extends Prometheus with: global query view across multiple instances, unlimited long-term retention via object storage (S3/GCS), and deduplication for HA Prometheus pairs. It's the standard for large-scale production Prometheus deployments.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What causes high cardinality and how do you detect it?</button>
+      <div class="qa-a"><p>Using labels with many unique values (user IDs, session IDs, trace IDs). Detect it with <code>prometheus_tsdb_head_series</code> metric or via the TSDB analysis: <code>./prometheus --storage.tsdb.path=/prometheus tsdb analyze</code>.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════
+     MODULE 7
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="m7">
+  <div class="module-header">
+    <div class="module-badge">7</div>
+    <div class="module-meta">
+      <h2>Observability & Troubleshooting</h2>
+      <div class="module-desc">Apply Prometheus and Grafana for real-world incident response, root cause analysis, and the RED/USE methodologies.</div>
+      <div class="module-tags"><span class="tag">RCA</span><span class="tag">RED Method</span><span class="tag">USE Method</span><span class="tag">Troubleshooting</span></div>
+    </div>
+  </div>
+
+  <h3>RED & USE Methods</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🔴 RED Method — For Services</div>
+      <ul>
+        <li><strong>R</strong>ate — Requests per second</li>
+        <li><strong>E</strong>rrors — Failed requests per second</li>
+        <li><strong>D</strong>uration — Latency distribution (P50/P95/P99)</li>
+      </ul>
+      <p style="margin-top:10px;">Best for microservices, APIs, and user-facing endpoints.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🔵 USE Method — For Resources</div>
+      <ul>
+        <li><strong>U</strong>tilization — How busy is the resource?</li>
+        <li><strong>S</strong>aturation — How overloaded / queued?</li>
+        <li><strong>E</strong>rrors — Are there errors on this resource?</li>
+      </ul>
+      <p style="margin-top:10px;">Best for infrastructure: CPU, disk, network, memory.</p>
+    </div>
+  </div>
+
+  <h3>Root Cause Analysis Workflow</h3>
+  <div class="diagram-block">
+    <span class="diagram-label">End-to-End Observability Workflow</span>
+<pre>
+  ALERT FIRES → "API latency P95 > 1 second"
+         │
+         ▼ Step 1: Confirm at service level (RED)
+  ┌─────────────────────────────────────────────────┐
+  │  rate(http_requests_total[5m])      → Request rate elevated?
+  │  sum(rate(...{status=~"5.."}[5m]))  → Error rate elevated?
+  │  histogram_quantile(0.95, ...)      → Which endpoints are slow?
+  └──────────────────────┬──────────────────────────┘
+                         ▼ Step 2: Check resources (USE)
+  ┌─────────────────────────────────────────────────┐
+  │  CPU > 90%?    → node_cpu_seconds_total          │
+  │  Memory full?  → node_memory_MemAvailable_bytes  │
+  │  Disk I/O?     → node_disk_io_time_seconds_total │
+  │  Network sat?  → node_network_receive_bytes_total│
+  └──────────────────────┬──────────────────────────┘
+                         ▼ Step 3: Correlate with Logs (Loki)
+  ┌─────────────────────────────────────────────────┐
+  │  {job="api"} |= "ERROR" | json                  │
+  │  → Find DB timeout errors? Dependency failures?  │
+  └──────────────────────┬──────────────────────────┘
+                         ▼ Step 4: Trace the slow request (Tempo)
+  ┌─────────────────────────────────────────────────┐
+  │  Find traces with duration > 1s                  │
+  │  Identify which SPAN is the bottleneck           │
+  │  → API → Auth (30ms) → DB query (900ms) ← SLOW! │
+  └─────────────────────────────────────────────────┘
+                         ▼ Step 5: Fix & Verify
+  Fix the identified issue → Watch metrics normalize in Grafana</pre>
+  </div>
+
+  <h3>Key Diagnostic PromQL Queries</h3>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">promql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># Slow endpoints (P95 > 500ms)
+histogram_quantile(0.95,
+  sum by (le, endpoint) (
+    rate(http_request_duration_seconds_bucket[5m])
+  )
+) > 0.5
+
+# Error rate spike
+sum by (job) (
+  rate(http_requests_total{status=~"5.."}[5m])
+) / sum by (job) (
+  rate(http_requests_total[5m])
+) * 100
+
+# CPU sudden spike (using irate for spikes)
+100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+# Memory leak detection (steadily climbing)
+predict_linear(node_memory_MemAvailable_bytes[1h], 3600)
+
+# Disk filling up — predicted time to full
+predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[6h], 4*3600) < 0</code></pre>
+  </div>
+
+  <div class="callout lab"><span class="callout-icon">🧪</span><div class="callout-content"><strong>Lab 7.1 — Simulate & Diagnose a Slowdown</strong><br/>1. Deploy the Flask app with a <code>/api/slow</code> endpoint (2-5s delay)<br/>2. Generate load: <code>while true; do curl localhost:5000/api/slow &amp; done</code><br/>3. Watch P95 latency spike in Grafana<br/>4. Alert fires: "SlowEndpoint > 1s for 2 minutes"<br/>5. Drill down by endpoint label to identify <code>/api/slow</code><br/>6. Check CPU/memory — confirm it's application-level not resource<br/>7. Fix endpoint, watch metrics recover</div></div>
+
+  <!-- Q&A -->
+  <div class="qa-section">
+    <div class="qa-header"><span>❓</span><h3>Quick Revision Q&A</h3><span class="qa-badge">4 Questions</span></div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Walk through diagnosing high API latency using Prometheus and Grafana.</button>
+      <div class="qa-a"><p>1) Check P95 latency metric — is it elevated? 2) Break down by endpoint label to isolate which is slow. 3) Check resource metrics (CPU, memory, disk I/O) on the serving host. 4) Check error rates simultaneously. 5) Correlate with Loki logs for error messages. 6) Use Tempo traces to find the slow span (e.g., DB query timeout).</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the RED method?</button>
+      <div class="qa-a"><p><strong>Rate</strong> (requests per second), <strong>Errors</strong> (failed requests per second), <strong>Duration</strong> (latency distribution). Applied to services — tells you if a service is serving requests correctly and quickly.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is predict_linear() used for?</button>
+      <div class="qa-a"><p>It predicts a future value of a metric using linear regression on a time range. Used for proactive alerting — e.g., <code>predict_linear(node_filesystem_avail_bytes[6h], 4*3600) &lt; 0</code> alerts "disk will be full in 4 hours."</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How do you correlate a metric spike with logs in Grafana?</button>
+      <div class="qa-a"><p>Use the <strong>Explore</strong> view — switch between Prometheus (metrics) and Loki (logs) and use the same time range. You can also set up <strong>Data Links</strong> on metric panels to jump to Loki with matching labels (e.g., same <code>job</code> label) automatically.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════
+     MODULE 8
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="m8">
+  <div class="module-header">
+    <div class="module-badge">8</div>
+    <div class="module-meta">
+      <h2>Loki, Tempo & Cloud Integrations</h2>
+      <div class="module-desc">Extend the observability stack with log aggregation (Loki), distributed tracing (Tempo), and cloud provider metrics.</div>
+      <div class="module-tags"><span class="tag">Loki</span><span class="tag">LogQL</span><span class="tag">Tempo</span><span class="tag">Tracing</span><span class="tag">Kubernetes</span><span class="tag">AWS</span></div>
+    </div>
+  </div>
+
+  <h3>Grafana Loki — Log Aggregation</h3>
+  <p>Loki is "Prometheus but for logs" — it <strong>only indexes labels</strong> (not log content), making it 10x cheaper than Elasticsearch. Pull logs with <strong>Promtail</strong> or Fluent Bit.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">⚡ How Loki Differs from ELK</div>
+      <div class="table-wrap" style="margin:0">
+        <table>
+          <thead><tr><th>Feature</th><th>Loki</th><th>Elasticsearch</th></tr></thead>
+          <tbody>
+            <tr><td>Indexes</td><td class="badge-green">Labels only</td><td>Full text</td></tr>
+            <tr><td>Cost</td><td class="badge-green">Low</td><td class="badge-red">High</td></tr>
+            <tr><td>Search</td><td>Label + grep</td><td class="badge-green">Full text</td></tr>
+            <tr><td>Integration</td><td class="badge-green">Grafana native</td><td>Kibana</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔍 LogQL Essentials</div>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">logql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Filter by label
+{job="myapp"}
+
+# Filter content
+{job="myapp"} |= "ERROR"
+
+# Regex
+{job="myapp"} |~ "timeout|refused"
+
+# Parse JSON logs
+{job="myapp"} | json | level="error"
+
+# Count error rate
+sum(rate({job="myapp"} |= "ERROR"[1m])) by (job)</code></pre></div>
+    </div>
+  </div>
+
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml — docker-compose Loki + Promtail</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml">services:
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log:ro
+      - ./promtail.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml</code></pre>
+  </div>
+
+  <h3>Grafana Tempo — Distributed Tracing</h3>
+  <div class="diagram-block">
+    <span class="diagram-label">Distributed Trace Structure</span>
+<pre>
+  Trace (entire request journey — TraceID: abc123):
+  │
+  ├── Span: API Gateway      ████████████████████████  200ms
+  │     ├── Span: Auth Svc   ████                       30ms
+  │     ├── Span: User Svc   ██████████                 80ms
+  │     │     └── Span: DB   █████████                  70ms  ← BOTTLENECK
+  │     └── Span: Cache      ██                         10ms
+  │
+  Total: 370ms</pre>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Concept</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Trace</strong></td><td>Complete end-to-end journey of a single request. Identified by TraceID.</td></tr>
+        <tr><td><strong>Span</strong></td><td>A single unit of work within a trace. Has a name, start time, and duration.</td></tr>
+        <tr><td><strong>OTLP</strong></td><td>OpenTelemetry Protocol — standard for sending traces to Tempo (gRPC :4317, HTTP :4318)</td></tr>
+        <tr><td><strong>Service Map</strong></td><td>Grafana auto-generates a dependency graph from trace data</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Q&A -->
+  <div class="qa-section">
+    <div class="qa-header"><span>❓</span><h3>Quick Revision Q&A</h3><span class="qa-badge">4 Questions</span></div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What makes Loki different from Elasticsearch for logs?</button>
+      <div class="qa-a"><p>Loki only indexes <strong>labels</strong> (metadata like job, pod, level), not the log content itself. This makes it significantly cheaper to operate. Trade-off: no full-text search — you use label filters + grep-style content filtering via LogQL.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is a trace span?</button>
+      <div class="qa-a"><p>A single unit of work in a distributed trace — has a name, service, start time, duration, and metadata tags. Multiple spans form a tree representing the complete request journey. The span with the longest duration is usually the bottleneck.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What protocol does Tempo use to receive traces?</button>
+      <div class="qa-a"><p><strong>OTLP</strong> (OpenTelemetry Protocol) — gRPC on port <strong>4317</strong>, HTTP on port <strong>4318</strong>. It also supports Jaeger (14268) and Zipkin (9411) protocols.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How do you correlate a trace to logs in Grafana?</button>
+      <div class="qa-a"><p>In Tempo data source settings, configure "Trace to Logs" pointing to Loki with matching tags (e.g., <code>job</code>, <code>pod</code>). Then in Explore, clicking a trace opens a side panel showing logs from that same pod at the same timestamp.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════
+     MODULE 9
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="m9">
+  <div class="module-header">
+    <div class="module-badge">9</div>
+    <div class="module-meta">
+      <h2>Projects & Hands-On Labs</h2>
+      <div class="module-desc">Two end-to-end projects — build a complete monitoring stack from scratch and simulate real failures.</div>
+      <div class="module-tags"><span class="tag">Project</span><span class="tag">Lab</span><span class="tag">Docker Compose</span><span class="tag">Flask</span><span class="tag">Failure Simulation</span></div>
+    </div>
+  </div>
+
+  <h3>Project 1 — Complete Monitoring Stack</h3>
+  <div class="diagram-block">
+    <span class="diagram-label">Project 1 Architecture</span>
+<pre>
+  ┌──────────┐   ┌──────────┐   ┌──────────────────┐
+  │ Frontend │   │   API    │   │   PostgreSQL DB  │
+  │  :3000   │──▶│  :5000   │──▶│   :5432          │
+  └──────────┘   └────┬─────┘   └────┬─────────────┘
+                 /metrics        pg_exporter:9187
+                      │               │
+  node-exporter:9100  │               │
+  cadvisor:8080        │               │
+       │               └───────────────┘
+       └───────────────────────┐
+                               ▼  scrape
+                       ┌──────────────────┐    ┌────────────────┐
+                       │   Prometheus     │───▶│  Alertmanager  │──▶ Slack
+                       │   :9090          │    │  :9093         │
+                       └──────┬───────────┘    └────────────────┘
+                              │
+                       ┌──────▼───────────┐
+                       │    Grafana       │
+                       │    :3001         │
+                       └──────────────────┘</pre>
+  </div>
+
+  <h4>Instrumented Flask App</h4>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">python — app.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-python">from flask import Flask, jsonify
+from prometheus_client import Counter, Histogram, Gauge, generate_latest
+import time, random
+
+app = Flask(__name__)
+
+REQUEST_COUNT   = Counter('http_requests_total', 'Requests', ['method','endpoint','status'])
+REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'Latency', ['endpoint'],
+                            buckets=[.01,.025,.05,.1,.25,.5,1,2.5])
+ACTIVE_REQUESTS = Gauge('http_active_requests', 'Active requests')
+
+@app.route('/api/users')
+def users():
+    ACTIVE_REQUESTS.inc()
+    start = time.time()
+    time.sleep(random.uniform(0.01, 0.1))  # Simulate normal work
+    REQUEST_COUNT.labels('GET', '/api/users', '200').inc()
+    REQUEST_LATENCY.labels('/api/users').observe(time.time() - start)
+    ACTIVE_REQUESTS.dec()
+    return jsonify({"status": "ok"})
+
+@app.route('/api/slow')
+def slow():
+    start = time.time()
+    time.sleep(random.uniform(2, 5))       # Simulate slow operation
+    REQUEST_COUNT.labels('GET', '/api/slow', '200').inc()
+    REQUEST_LATENCY.labels('/api/slow').observe(time.time() - start)
+    return jsonify({"status": "slow"})
+
+@app.route('/metrics')
+def metrics():
+    return generate_latest(), 200, {'Content-Type': 'text/plain'}
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)</code></pre>
+  </div>
+
+  <h4>Failure Simulation Commands</h4>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-bash"># 1. High CPU load
+stress --cpu 4 --timeout 120s
+
+# 2. Memory pressure
+stress --vm 2 --vm-bytes 512M --timeout 60s
+
+# 3. Generate HTTP 500 errors
+for i in {1..100}; do curl -s http://localhost:5000/api/bad; done
+
+# 4. High latency storm
+for i in {1..50}; do curl -s http://localhost:5000/api/slow &; done
+
+# 5. Kill the service (simulate outage)
+docker-compose stop app
+# Wait for ServiceDown alert to fire (1 min)
+docker-compose start app
+
+# 6. View firing alerts
+curl http://localhost:9093/api/v1/alerts | jq .data[].labels</code></pre>
+  </div>
+
+  <h3>Project 2 — Unified Observability Dashboard</h3>
+  <p>Extend Project 1 with Loki + Tempo for a full metrics-logs-traces dashboard.</p>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml — Grafana datasource provisioning (all three)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml"># grafana/provisioning/datasources/all.yml
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    url: http://prometheus:9090
+    isDefault: true
+
+  - name: Loki
+    type: loki
+    url: http://loki:3100
+    jsonData:
+      derivedFields:
+        - name: TraceID
+          matcherRegex: "traceID=(\\w+)"
+          url: "${__value.raw}"
+          datasourceUid: tempo
+
+  - name: Tempo
+    type: tempo
+    url: http://tempo:3200
+    uid: tempo
+    jsonData:
+      tracesToLogs:
+        datasourceUid: loki
+        tags: ['job', 'pod']</code></pre>
+  </div>
+
+  <div class="callout tip"><span class="callout-icon">💡</span><div class="callout-content"><strong>Unified Dashboard Layout</strong>Row 1: Service Health (Prometheus) — Request rate, Error %, P95 latency, Active connections<br/>Row 2: Infrastructure (Node Exporter) — CPU %, Memory %, Disk I/O, Network<br/>Row 3: Logs (Loki) — Error log stream, Log volume by level<br/>Row 4: Traces (Tempo) — Trace search, Service map<br/>Row 5: Active Alerts — Alert list panel</div></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════
+     CHEAT SHEET
+═══════════════════════════════════════════════ -->
+<section class="module-section" id="cheatsheet">
+  <div class="module-header">
+    <div class="module-badge" style="background: linear-gradient(135deg,#F46800,#FADE2A)">★</div>
+    <div class="module-meta">
+      <h2>Quick Reference Cheat Sheet</h2>
+      <div class="module-desc">Ports, essential PromQL, metric type decision tree, alert template, and top interview questions.</div>
+    </div>
+  </div>
+
+  <h3>Default Ports</h3>
+  <div class="port-grid">
+    <div class="port-card"><div class="port-num">9090</div><div class="port-name">Prometheus Server</div></div>
+    <div class="port-card"><div class="port-num">9093</div><div class="port-name">Alertmanager</div></div>
+    <div class="port-card"><div class="port-num">3000</div><div class="port-name">Grafana</div></div>
+    <div class="port-card"><div class="port-num">9100</div><div class="port-name">Node Exporter</div></div>
+    <div class="port-card"><div class="port-num">8080</div><div class="port-name">cAdvisor</div></div>
+    <div class="port-card"><div class="port-num">9091</div><div class="port-name">Pushgateway</div></div>
+    <div class="port-card"><div class="port-num">3100</div><div class="port-name">Grafana Loki</div></div>
+    <div class="port-card"><div class="port-num">3200</div><div class="port-name">Grafana Tempo</div></div>
+    <div class="port-card"><div class="port-num">9104</div><div class="port-name">MySQL Exporter</div></div>
+    <div class="port-card"><div class="port-num">9187</div><div class="port-name">Postgres Exporter</div></div>
+    <div class="port-card"><div class="port-num">4317</div><div class="port-name">OTLP gRPC</div></div>
+    <div class="port-card"><div class="port-num">4318</div><div class="port-name">OTLP HTTP</div></div>
+  </div>
+
+  <h3>Metric Type Decision Tree</h3>
+  <div class="cheat-section">
+    <div class="diagram-block" style="margin:0">
+<pre>
+  What are you measuring?
+  │
+  ├─ Does it ONLY go up (counting events)?
+  │     └─ COUNTER  (always use with rate() or increase())
+  │
+  ├─ Can it go UP or DOWN (current state snapshot)?
+  │     └─ GAUGE
+  │
+  ├─ Distribution of values (latency, request size)?
+  │   ├─ Need cross-instance aggregation?  → HISTOGRAM ✓ (preferred)
+  │   └─ Per-instance accuracy only?       → SUMMARY
+  │
+  └─ Unsure? → Use HISTOGRAM (most flexible)</pre>
+    </div>
+  </div>
+
+  <h3>Alert Rule Template</h3>
+  <div class="code-wrapper">
+    <div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code class="language-yaml">- alert: AlertName
+  expr: <PromQL that returns non-empty when condition is true>
+  for: <duration — how long must condition hold before firing>
+  labels:
+    severity: <warning|critical>
+    team: <team-name>
+  annotations:
+    summary: "Short description {{ $labels.instance }}"
+    description: "Detail. Value: {{ $value | printf \"%.2f\" }}"
+    runbook_url: "https://wiki.example.com/runbooks/alert-name"</code></pre>
+  </div>
+
+  <h3>Common Pitfalls & Fixes</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Pitfall</th><th>Root Cause</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Prometheus OOM crash</td><td>Label cardinality explosion</td><td>Remove high-cardinality labels; audit with <code>tsdb analyze</code></td></tr>
+        <tr><td>Scrape target shows DOWN</td><td>Exporter not running, wrong port</td><td>Check with <code>curl host:port/metrics</code>; check firewall</td></tr>
+        <tr><td>Alerts flapping</td><td><code>for</code> duration too short</td><td>Increase <code>for</code> to 5m+; use <code>rate()</code> not <code>irate()</code></td></tr>
+        <tr><td>Grafana dashboards slow</td><td>Expensive PromQL on every refresh</td><td>Create recording rules for repeated complex queries</td></tr>
+        <tr><td>Counter spike on restart</td><td>Using counter value directly</td><td>Always wrap counters in <code>rate()</code> or <code>increase()</code></td></tr>
+        <tr><td>Stale Pushgateway data</td><td>Job failed silently, old data stuck</td><td><code>DELETE http://pushgateway:9091/metrics/job/name</code></td></tr>
+        <tr><td>Alertmanager not receiving</td><td>Missing <code>alerting:</code> config</td><td>Add <code>alerting: alertmanagers: targets: [alertmanager:9093]</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Top Interview Questions</h3>
+  <div class="qa-section">
+    <div class="qa-header"><span>🎓</span><h3>Interview Preparation</h3><span class="qa-badge">12 Questions</span></div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Explain the Prometheus pull model and its advantages.</button>
+      <div class="qa-a"><p>Prometheus pulls metrics from targets on a schedule. Advantages: central control, easy to detect dead targets (no scrape = down), simpler firewall rules (scraper initiates connections outbound), no agent configuration needed on targets.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What are the four Prometheus metric types and when do you use each?</button>
+      <div class="qa-a"><p><strong>Counter</strong> — monotonically increasing (requests, errors). <strong>Gauge</strong> — up/down current state (memory, connections). <strong>Histogram</strong> — distribution with configurable buckets (latency), aggregatable. <strong>Summary</strong> — pre-calculated client-side quantiles, not aggregatable.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Write a PromQL query for 95th percentile HTTP latency.</button>
+      <div class="qa-a"><p><code>histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))</code></p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How does Prometheus handle high availability?</button>
+      <div class="qa-a"><p>Run two Prometheus instances with identical configs scraping the same targets. For deduplication and global querying, use <strong>Thanos</strong> or <strong>Cortex</strong>. Alertmanager also supports HA with <code>--cluster.peer</code> flags.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is label cardinality and why does it matter?</button>
+      <div class="qa-a"><p>Cardinality is the number of unique time-series created by label combinations. High cardinality (user_id, session_id) creates millions of series, exhausting Prometheus RAM and degrading query performance. Each unique label set = one time-series in memory.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the difference between recording rules and alert rules?</button>
+      <div class="qa-a"><p><strong>Recording rules</strong> pre-compute PromQL expressions and save as new metrics — used to speed up dashboard queries. <strong>Alert rules</strong> evaluate PromQL expressions and fire alerts when conditions are met. Both are defined in rule files loaded by Prometheus.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is Grafana's Explore view?</button>
+      <div class="qa-a"><p>An ad-hoc query interface for investigating issues without modifying dashboards. You can write PromQL, LogQL, or trace queries directly, switch between Prometheus/Loki/Tempo in one view, and correlate across data sources during incident investigation.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How do you handle short-lived jobs in Prometheus?</button>
+      <div class="qa-a"><p>Use <strong>Pushgateway</strong> — the job pushes its metrics to Pushgateway before exiting, then Prometheus scrapes Pushgateway on its normal interval. Not recommended for long-running services; use direct scraping instead.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Describe the RED and USE methods.</button>
+      <div class="qa-a"><p><strong>RED</strong> (for services): Rate (requests/sec), Errors (failed requests), Duration (latency). <strong>USE</strong> (for resources): Utilization (how busy), Saturation (how overloaded), Errors (error rate). Use RED to diagnose service issues, USE for infrastructure issues.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the difference between Loki and Prometheus?</button>
+      <div class="qa-a"><p>Prometheus stores <strong>numerical time-series metrics</strong> (scraped from /metrics endpoints). Loki stores <strong>log streams</strong> (text) pushed from agents like Promtail. Both use a label-based data model and integrate natively with Grafana.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the difference between rate() and irate()?</button>
+      <div class="qa-a"><p><code>rate()</code> calculates the average per-second rate over the full range window — smoother, good for alerting and trend graphs. <code>irate()</code> uses only the last two samples — highly sensitive to spikes, good for instant spike detection but noisy on graphs.</p></div>
+    </div>
+    <div class="qa-item">
+      <button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is Federation in Prometheus?</button>
+      <div class="qa-a"><p>A mechanism where a "global" Prometheus scrapes selected/aggregated metrics from multiple lower-level Prometheus instances via their <code>/federate</code> endpoint. Used for hierarchical, multi-datacenter monitoring without sending all raw series to a central instance.</p></div>
+    </div>
+  </div>
+
+</section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ─── Syntax Highlighting ───
+document.addEventListener('DOMContentLoaded', () => { hljs.highlightAll(); });
+
+// ─── Progress Bar ───
+window.addEventListener('scroll', () => {
+  const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+  document.getElementById('progress-bar').style.width = scrolled + '%';
+  const bt = document.getElementById('back-top');
+  bt.classList.toggle('visible', window.scrollY > 400);
+});
+
+// ─── Active Nav Highlight ───
+const sections = document.querySelectorAll('.module-section');
+const navItems = document.querySelectorAll('.nav-item');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navItems.forEach(n => n.classList.remove('active'));
+      const id = entry.target.id;
+      const active = document.querySelector(`.nav-item[href="#${id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// ─── Copy Code ───
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrapper').querySelector('code');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ─── Q&A Accordion ───
+function toggleQA(btn) {
+  const item = btn.closest('.qa-item');
+  const isOpen = item.classList.contains('open');
+  item.closest('.qa-section').querySelectorAll('.qa-item').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+// ─── Tabs ───
+function showTab(btn, panelId) {
+  const wrapper = btn.closest('.module-section');
+  wrapper.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  wrapper.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ─── Search Nav ───
+function filterNav(q) {
+  const lower = q.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.style.display = item.textContent.toLowerCase().includes(lower) ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-section-label').forEach(l => { l.style.display = ''; });
+}
+</script>
+</body>
+</html>
