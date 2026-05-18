@@ -4,201 +4,703 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Observability for SREs | Complete Tutorial (AKS)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=SF+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #ffffff; color: #1d1d1f; line-height: 1.5; scroll-behavior: smooth; }
-    #progress { position: fixed; top: 0; left: 0; height: 3px; background: #0071e3; width: 0%; z-index: 1000; transition: width 0.1s; }
-    #sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100vh; background: #fafafc; border-right: 1px solid #e9e9ef; overflow-y: auto; z-index: 100; font-size: 14px; }
-    .sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid #e9e9ef; }
-    .logo-icon { font-size: 28px; margin-bottom: 6px; }
-    .logo-text { font-weight: 700; font-size: 18px; letter-spacing: -0.3px; background: linear-gradient(135deg, #1d1d1f, #0071e3); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .sidebar-subtitle { font-size: 12px; color: #6e6e73; margin-top: 4px; }
-    .sidebar-search { padding: 16px 20px; }
-    .sidebar-search input { width: 100%; padding: 8px 14px; background: #fff; border: 1px solid #d2d2d7; border-radius: 10px; font-size: 13px; outline: none; }
-    .sidebar-search input:focus { border-color: #0071e3; box-shadow: 0 0 0 2px rgba(0,113,227,0.2); }
-    .sidebar-nav { padding: 8px 0 20px; }
-    .nav-section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6e6e73; padding: 16px 20px 6px; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 8px 20px; text-decoration: none; color: #1d1d1f; font-weight: 500; border-left: 3px solid transparent; transition: 0.2s; cursor: pointer; }
-    .nav-item:hover { background: #f5f5f7; }
-    .nav-item.active { border-left-color: #0071e3; background: #f5f5f7; color: #0071e3; }
-    .nav-num { width: 24px; height: 24px; background: #e8e8ed; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
-    .nav-item.active .nav-num { background: #0071e3; color: white; }
-    .sidebar-footer { font-size: 11px; padding: 20px; border-top: 1px solid #e9e9ef; color: #86868b; }
-    #main { margin-left: 280px; min-height: 100vh; }
-    #topbar { position: sticky; top: 0; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #e9e9ef; padding: 0 40px; height: 64px; display: flex; align-items: center; justify-content: space-between; z-index: 90; }
-    .topbar-title { font-weight: 600; font-size: 17px; }
-    .pill { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #f2f2f5; margin-left: 8px; }
-    .hero { padding: 60px 40px 48px; border-bottom: 1px solid #e9e9ef; background: #ffffff; }
-    .hero-eyebrow { font-size: 14px; font-weight: 600; text-transform: uppercase; color: #0071e3; margin-bottom: 12px; }
-    .hero h1 { font-size: 48px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 20px; background: linear-gradient(135deg, #1d1d1f, #0071e3); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .hero-desc { font-size: 18px; color: #424245; max-width: 620px; margin-bottom: 32px; }
-    .content { padding: 0 40px 80px; max-width: 1200px; }
-    .module-section { padding-top: 60px; scroll-margin-top: 80px; }
-    .module-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 32px; }
-    .module-badge { width: 54px; height: 54px; background: #0071e3; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; color: white; box-shadow: 0 4px 12px rgba(0,113,227,0.2); flex-shrink: 0; }
-    .module-meta h2 { font-size: 30px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
-    .module-desc { font-size: 16px; color: #424245; }
-    .card { background: #ffffff; border: 1px solid #e9e9ef; border-radius: 20px; padding: 24px; margin-bottom: 24px; }
-    .card-title { font-weight: 700; font-size: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 20px 0; }
-    .svg-container { background: #f9f9fb; border: 1px solid #e9e9ef; border-radius: 20px; padding: 24px; margin: 24px 0; overflow-x: auto; text-align: center; }
-    .svg-container svg { max-width: 100%; height: auto; }
-    .code-wrapper { margin: 20px 0; border-radius: 14px; border: 1px solid #e9e9ef; overflow: hidden; background: #fafafc; }
-    .code-header { background: #f2f2f5; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e9e9ef; }
-    .code-lang { font-size: 11px; font-weight: 600; color: #0071e3; }
-    .copy-btn { background: white; border: 1px solid #d2d2d7; border-radius: 8px; padding: 4px 12px; font-size: 11px; font-weight: 500; cursor: pointer; transition: 0.2s; }
-    .copy-btn:hover { border-color: #0071e3; color: #0071e3; }
-    pre code.hljs { background: #fafafc; padding: 18px !important; font-size: 13px; }
-    .callout { border-radius: 16px; padding: 16px 20px; margin: 20px 0; display: flex; gap: 12px; border-left: 4px solid #0071e3; background: #f0f5ff; }
-    .callout.tip { border-left-color: #34c759; background: #f0faf0; }
-    .callout.lab { border-left-color: #af52de; background: #f8f0fc; }
-    .callout.warning { border-left-color: #ff9f0a; background: #fff8e7; }
-    .callout.info { border-left-color: #0071e3; background: #f0f5ff; }
-    .compare-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    .compare-table th, .compare-table td { border: 1px solid #e9e9ef; padding: 12px; text-align: left; vertical-align: top; }
-    .compare-table th { background: #f5f5f7; }
-    .qa-section { background: #ffffff; border: 1px solid #e9e9ef; border-radius: 20px; overflow: hidden; margin: 30px 0; }
-    .qa-header { background: #f5f5f7; padding: 16px 20px; font-weight: 600; }
-    .qa-q { width: 100%; text-align: left; padding: 14px 20px; background: none; border: none; font-weight: 500; display: flex; align-items: center; gap: 12px; cursor: pointer; border-top: 1px solid #e9e9ef; }
-    .qa-q-icon svg { width: 10px; fill: #6e6e73; transition: transform 0.2s; }
-    .qa-item.open .qa-q-icon svg { transform: rotate(90deg); }
-    .qa-a { padding: 0 20px 0 52px; max-height: 0; overflow: hidden; transition: 0.3s; color: #424245; font-size: 14px; }
-    .qa-item.open .qa-a { max-height: 400px; padding: 0 20px 20px 52px; }
-    #back-top { position: fixed; bottom: 24px; right: 24px; background: #0071e3; border: none; width: 44px; height: 44px; border-radius: 44px; color: white; font-size: 20px; cursor: pointer; opacity: 0; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 200; }
-    #back-top.visible { opacity: 1; }
-    .diagram-caption { font-size: 14px; color: #424245; line-height: 1.65; margin-top: 16px; padding: 0 4px; }
-    .diagram-caption strong { color: #1d1d1f; }
+    /* ===================================================
+       RESET & BASE
+    =================================================== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* ===== SEPARATE CODE BLOCKS TO THE RIGHT SIDE ===== */
-    .module-section .code-wrapper {
-        float: right;
-        width: 46%;
-        margin: 0 0 1.5rem 1.5rem;
-        clear: right;
-        background: #ffffff;
-        border-radius: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    :root {
+      --blue:        #0071e3;
+      --blue-light:  #f0f5ff;
+      --blue-mid:    #a8c4f0;
+      --green:       #34c759;
+      --green-light: #f0faf0;
+      --orange:      #ff9f0a;
+      --orange-light:#fff8e7;
+      --purple:      #af52de;
+      --purple-light:#f8f0fc;
+      --red:         #ff3b30;
+      --border:      #e5e5ea;
+      --bg:          #f5f5f7;
+      --card-bg:     #ffffff;
+      --text-primary:#1d1d1f;
+      --text-secondary:#424245;
+      --text-muted:  #6e6e73;
+      --sidebar-w:   272px;
+      --topbar-h:    60px;
+      --radius-sm:   10px;
+      --radius-md:   14px;
+      --radius-lg:   20px;
     }
-    /* Prevent floating issues inside card-grid or callouts */
-    .module-section .card,
-    .module-section .svg-container,
-    .module-section .diagram-caption,
-    .module-section .callout,
-    .module-section .card-grid,
-    .module-section .compare-table,
-    .module-section .qa-section {
-        overflow: hidden; /* clearfix for floats */
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
     }
-    @media (max-width: 900px) {
-        .module-section .code-wrapper {
-            float: none;
-            width: 100%;
-            margin: 1.5rem 0;
-        }
+
+    /* ===================================================
+       PROGRESS BAR
+    =================================================== */
+    #progress {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: linear-gradient(90deg, var(--blue), #5ac8fa);
+      width: 0%; z-index: 1001; transition: width 0.15s linear;
+      pointer-events: none;
     }
-    /* Ensure diagrams remain readable on left */
+
+    /* ===================================================
+       SIDEBAR
+    =================================================== */
+    #sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: #ffffff;
+      border-right: 1px solid var(--border);
+      overflow-y: auto; overflow-x: hidden;
+      z-index: 200;
+      display: flex; flex-direction: column;
+      transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+      scroll-behavior: smooth;
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px 18px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .logo-icon { font-size: 26px; margin-bottom: 5px; }
+    .logo-text {
+      font-weight: 700; font-size: 17px; letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #1d1d1f 30%, var(--blue));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .logo-text span { font-weight: 400; }
+    .sidebar-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+    .sidebar-search {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sidebar-search input {
+      width: 100%; padding: 7px 12px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 13px; outline: none;
+      font-family: inherit; transition: border-color .2s, box-shadow .2s;
+    }
+    .sidebar-search input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    }
+
+    .sidebar-nav { padding: 8px 0 16px; flex: 1; }
+
+    .nav-section-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text-muted); padding: 14px 18px 5px;
+    }
+    .nav-section-label.hidden { display: none; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 18px; text-decoration: none;
+      color: var(--text-secondary); font-size: 13px; font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: background .15s, color .15s, border-color .15s;
+      cursor: pointer;
+    }
+    .nav-item:hover { background: var(--bg); color: var(--text-primary); }
+    .nav-item.active {
+      border-left-color: var(--blue);
+      background: var(--blue-light); color: var(--blue);
+    }
+    .nav-num {
+      width: 22px; height: 22px;
+      background: var(--bg); border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+      transition: background .15s, color .15s;
+    }
+    .nav-item.active .nav-num { background: var(--blue); color: #fff; }
+    .nav-item.hidden { display: none; }
+
+    .sidebar-footer {
+      font-size: 11px; padding: 16px 18px;
+      border-top: 1px solid var(--border); color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* Mobile hamburger */
+    #mob-toggle {
+      display: none; position: fixed;
+      top: 14px; left: 14px; z-index: 300;
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 10px; width: 38px; height: 38px;
+      cursor: pointer; font-size: 18px;
+      align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    #mob-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35); z-index: 190;
+    }
+
+    /* ===================================================
+       MAIN LAYOUT
+    =================================================== */
+    #main {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+    }
+
+    /* ===================================================
+       TOPBAR
+    =================================================== */
+    #topbar {
+      position: sticky; top: 0;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 36px; height: var(--topbar-h);
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 100;
+    }
+    .topbar-title { font-weight: 600; font-size: 15px; color: var(--text-primary); }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill {
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      background: var(--bg); color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    /* ===================================================
+       HERO
+    =================================================== */
+    .hero {
+      padding: 56px 40px 48px;
+      background: linear-gradient(160deg, #ffffff 60%, #f0f5ff 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--blue); margin-bottom: 10px;
+    }
+    .hero h1 {
+      font-size: 44px; font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1.1;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #1d1d1f 40%, var(--blue));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero-desc {
+      font-size: 16px; color: var(--text-secondary);
+      max-width: 560px; line-height: 1.7;
+    }
+
+    /* ===================================================
+       CONTENT WRAPPER
+    =================================================== */
+    .content {
+      padding: 0 40px 80px;
+      max-width: 1080px;
+    }
+
+    /* ===================================================
+       MODULE SECTIONS
+    =================================================== */
+    .module-section {
+      padding-top: 56px;
+      scroll-margin-top: calc(var(--topbar-h) + 12px);
+    }
+
+    .module-header {
+      display: flex; align-items: flex-start;
+      gap: 18px; margin-bottom: 28px;
+    }
+    .module-badge {
+      width: 48px; height: 48px; flex-shrink: 0;
+      background: var(--blue); border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 20px; color: #fff;
+      box-shadow: 0 4px 12px rgba(0,113,227,0.25);
+    }
+    .module-meta h2 {
+      font-size: 26px; font-weight: 700;
+      letter-spacing: -0.02em; line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .module-desc { font-size: 14px; color: var(--text-muted); }
+
+    /* ===================================================
+       CARDS
+    =================================================== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card-title {
+      font-weight: 700; font-size: 15px;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .card p + p { margin-top: 8px; }
+    .card code {
+      background: var(--bg); padding: 2px 6px;
+      border-radius: 5px; font-size: 12.5px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #c2410c;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .card-grid .card { margin-bottom: 0; }
+
+    /* ===================================================
+       SVG DIAGRAMS
+    =================================================== */
+    .svg-container {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px 16px;
+      margin: 24px 0;
+      overflow-x: auto;
+      text-align: center;
+    }
     .svg-container svg {
-        max-width: 100%;
-        height: auto;
+      max-width: 100%;
+      height: auto;
+      display: inline-block;
+    }
+    .diagram-caption {
+      font-size: 13.5px; color: var(--text-secondary);
+      line-height: 1.65; margin-top: 12px;
+      padding: 0 4px;
+    }
+    .diagram-caption strong { color: var(--text-primary); }
+
+    /* ===================================================
+       CODE BLOCKS — NO FLOAT, CLEAN LAYOUT
+    =================================================== */
+    .code-wrapper {
+      margin: 20px 0;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: #fafafa;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .code-header {
+      background: #f2f2f5;
+      padding: 9px 14px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .code-lang {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.6px;
+      color: var(--blue);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .copy-btn {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 7px; padding: 3px 11px;
+      font-size: 11px; font-weight: 600; cursor: pointer;
+      color: var(--text-secondary); transition: all .2s;
+      font-family: inherit;
+    }
+    .copy-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+    pre code.hljs {
+      background: #fafafa !important;
+      padding: 16px 18px !important;
+      font-size: 12.5px !important;
+      line-height: 1.6 !important;
+      font-family: 'JetBrains Mono', 'SF Mono', monospace !important;
     }
 
-    @media (max-width: 768px) { #sidebar { transform: translateX(-280px); transition: 0.2s; } #main { margin-left: 0; } .hero h1 { font-size: 32px; } .content { padding: 0 20px 60px; } }
+    /* ===================================================
+       CALLOUTS
+    =================================================== */
+    .callout {
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      margin: 18px 0;
+      display: flex; gap: 10px;
+      border-left: 4px solid var(--blue);
+      background: var(--blue-light);
+      font-size: 13.5px; line-height: 1.6;
+    }
+    .callout code {
+      background: rgba(0,0,0,0.07); padding: 1px 5px;
+      border-radius: 4px; font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .callout.tip  { border-left-color: var(--green);  background: var(--green-light); }
+    .callout.lab  { border-left-color: var(--purple); background: var(--purple-light); }
+    .callout.warning { border-left-color: var(--orange); background: var(--orange-light); }
+    .callout.info    { border-left-color: var(--blue);   background: var(--blue-light); }
+
+    /* ===================================================
+       TABLES
+    =================================================== */
+    .compare-table {
+      width: 100%; border-collapse: collapse;
+      margin: 20px 0; font-size: 13.5px;
+    }
+    .compare-table th, .compare-table td {
+      border: 1px solid var(--border);
+      padding: 11px 14px; text-align: left; vertical-align: top;
+    }
+    .compare-table th {
+      background: var(--bg); font-weight: 600; font-size: 12px;
+      text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-muted);
+    }
+    .compare-table tr:hover td { background: #fafafa; }
+    .compare-table code {
+      background: var(--bg); padding: 1px 5px; border-radius: 4px;
+      font-size: 11.5px; font-family: 'JetBrains Mono', monospace; color: #c2410c;
+    }
+
+    /* ===================================================
+       QA ACCORDION
+    =================================================== */
+    .qa-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden; margin: 16px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .qa-header {
+      background: var(--bg); padding: 13px 18px;
+      font-weight: 700; font-size: 13px;
+      border-bottom: 1px solid var(--border); color: var(--text-muted);
+    }
+    .qa-q {
+      width: 100%; text-align: left;
+      padding: 13px 18px; background: none; border: none;
+      font-size: 14px; font-weight: 500; font-family: inherit;
+      color: var(--text-primary);
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      border-top: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .qa-q:hover { background: var(--bg); }
+    .qa-q:first-child { border-top: none; }
+    .qa-q-icon {
+      flex-shrink: 0; width: 18px; height: 18px;
+      background: var(--bg); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+    }
+    .qa-q-icon svg { width: 8px; fill: none; stroke: var(--text-muted); stroke-width: 1.8; transition: transform .25s; }
+    .qa-item.open .qa-q-icon { background: var(--blue-light); }
+    .qa-item.open .qa-q-icon svg { transform: rotate(90deg); stroke: var(--blue); }
+
+    .qa-a {
+      max-height: 0; overflow: hidden;
+      transition: max-height .35s cubic-bezier(.4,0,.2,1), padding .3s;
+      padding: 0 18px 0 46px;
+      font-size: 13.5px; color: var(--text-secondary); line-height: 1.7;
+    }
+    .qa-a code {
+      background: var(--bg); padding: 1px 5px; border-radius: 4px;
+      font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #c2410c;
+    }
+    .qa-item.open .qa-a {
+      max-height: 800px;  /* generously large to avoid clipping */
+      padding: 12px 18px 18px 46px;
+    }
+
+    /* ===================================================
+       BACK TO TOP
+    =================================================== */
+    #back-top {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--blue); border: none;
+      width: 42px; height: 42px; border-radius: 42px;
+      color: #fff; font-size: 18px; cursor: pointer;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+      box-shadow: 0 4px 16px rgba(0,113,227,0.35);
+      z-index: 150;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #back-top.visible { opacity: 1; transform: translateY(0); }
+
+    /* ===================================================
+       ORDERED LIST
+    =================================================== */
+    .module-section ol {
+      padding-left: 22px; margin: 16px 0;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .module-section ol li { font-size: 14px; color: var(--text-secondary); }
+
+    /* ===================================================
+       SECTION DIVIDER
+    =================================================== */
+    .module-section + .module-section {
+      border-top: 1px solid var(--border);
+    }
+
+    /* ===================================================
+       RESPONSIVE — MOBILE
+    =================================================== */
+    @media (max-width: 820px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.open { transform: translateX(0); }
+      #mob-toggle { display: flex; }
+      #mob-overlay.visible { display: block; }
+      #main { margin-left: 0; }
+      .hero { padding: 48px 20px 36px; }
+      .hero h1 { font-size: 30px; }
+      .content { padding: 0 20px 60px; }
+      #topbar { padding: 0 20px 0 60px; }
+      .card-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 24px; }
+      .module-meta h2 { font-size: 20px; }
+    }
   </style>
 </head>
 <body>
-<div id="progress"></div>
+
+<!-- Progress bar -->
+<div id="progress" role="progressbar" aria-label="Reading progress"></div>
+
+<!-- Mobile toggle -->
+<button id="mob-toggle" aria-label="Toggle menu" onclick="toggleSidebar()">☰</button>
+<div id="mob-overlay" onclick="closeSidebar()"></div>
+
+<!-- ============================================================
+     SIDEBAR
+============================================================ -->
 <nav id="sidebar" aria-label="Main navigation">
-  <div class="sidebar-logo"><div class="logo-icon">🔭</div><div class="logo-text">observability<span style="font-weight:400">.sre</span></div><div class="sidebar-subtitle">Complete tutorial · AKS</div></div>
+  <div class="sidebar-logo">
+    <div class="logo-icon">🔭</div>
+    <div class="logo-text">observability<span>.sre</span></div>
+    <div class="sidebar-subtitle">Complete tutorial · AKS</div>
+  </div>
   <div class="sidebar-search">
     <label for="searchInput" style="position:absolute;width:1px;height:1px;overflow:hidden">Search topics</label>
-    <input type="text" id="searchInput" placeholder="Search topics..." aria-label="Search topics" oninput="filterNav(this.value)">
+    <input type="text" id="searchInput" placeholder="Search topics…" autocomplete="off" oninput="filterNav(this.value)">
   </div>
-  <div class="sidebar-nav">
-    <div class="nav-section-label">Foundations</div>
-    <a class="nav-item" href="#intro"><span class="nav-num">1</span>Observability &amp; monitoring</a>
-    <a class="nav-item" href="#pillars"><span class="nav-num">2</span>Three pillars &amp; correlation</a>
-    <a class="nav-item" href="#instrumentation"><span class="nav-num">3</span>Instrumentation deep dive</a>
-    <div class="nav-section-label">Tools &amp; architecture</div>
-    <a class="nav-item" href="#grafana"><span class="nav-num">4</span>Grafana</a>
-    <a class="nav-item" href="#prometheus"><span class="nav-num">5</span>Prometheus + PromQL</a>
-    <a class="nav-item" href="#alertmanager"><span class="nav-num">6</span>Alertmanager</a>
-    <a class="nav-item" href="#loki"><span class="nav-num">7</span>Loki + LogQL</a>
-    <a class="nav-item" href="#tempo"><span class="nav-num">8</span>Tempo + TraceQL</a>
-    <a class="nav-item" href="#otel"><span class="nav-num">9</span>OpenTelemetry collector</a>
-    <div class="nav-section-label">AKS production setup</div>
-    <a class="nav-item" href="#azure-setup"><span class="nav-num">10</span>AKS + Workload Identity</a>
-    <a class="nav-item" href="#helm-deploy"><span class="nav-num">11</span>Helm deployments</a>
-    <a class="nav-item" href="#sampleapp"><span class="nav-num">12</span>Sample app (Python)</a>
-    <a class="nav-item" href="#incident"><span class="nav-num">13</span>Incident walkthrough</a>
-    <a class="nav-item" href="#best-practices"><span class="nav-num">14</span>Best practices &amp; cost</a>
-    <a class="nav-item" href="#troubleshooting"><span class="nav-num">15</span>Troubleshooting guide</a>
-    <div class="nav-section-label">Labs &amp; interviews</div>
-    <a class="nav-item" href="#labs"><span class="nav-num">★</span>Hands-on labs</a>
-    <a class="nav-item" href="#comparison"><span class="nav-num">✓</span>Tool comparisons</a>
-    <a class="nav-item" href="#interview"><span class="nav-num">?</span>SRE interview Q&amp;A</a>
-    <a class="nav-item" href="#cleanup"><span class="nav-num">🗑️</span>Cleanup</a>
+  <div class="sidebar-nav" id="navList">
+    <div class="nav-section-label" data-group="foundations">Foundations</div>
+    <a class="nav-item" href="#intro"            data-group="foundations"><span class="nav-num">1</span>Observability &amp; monitoring</a>
+    <a class="nav-item" href="#pillars"          data-group="foundations"><span class="nav-num">2</span>Three pillars &amp; correlation</a>
+    <a class="nav-item" href="#instrumentation"  data-group="foundations"><span class="nav-num">3</span>Instrumentation deep dive</a>
+
+    <div class="nav-section-label" data-group="tools">Tools &amp; architecture</div>
+    <a class="nav-item" href="#grafana"      data-group="tools"><span class="nav-num">4</span>Grafana</a>
+    <a class="nav-item" href="#prometheus"   data-group="tools"><span class="nav-num">5</span>Prometheus + PromQL</a>
+    <a class="nav-item" href="#alertmanager" data-group="tools"><span class="nav-num">6</span>Alertmanager</a>
+    <a class="nav-item" href="#loki"         data-group="tools"><span class="nav-num">7</span>Loki + LogQL</a>
+    <a class="nav-item" href="#tempo"        data-group="tools"><span class="nav-num">8</span>Tempo + TraceQL</a>
+    <a class="nav-item" href="#otel"         data-group="tools"><span class="nav-num">9</span>OpenTelemetry collector</a>
+
+    <div class="nav-section-label" data-group="aks">AKS production setup</div>
+    <a class="nav-item" href="#azure-setup"   data-group="aks"><span class="nav-num">10</span>AKS + Workload Identity</a>
+    <a class="nav-item" href="#helm-deploy"   data-group="aks"><span class="nav-num">11</span>Helm deployments</a>
+    <a class="nav-item" href="#sampleapp"     data-group="aks"><span class="nav-num">12</span>Sample app (Python)</a>
+    <a class="nav-item" href="#incident"      data-group="aks"><span class="nav-num">13</span>Incident walkthrough</a>
+    <a class="nav-item" href="#best-practices"data-group="aks"><span class="nav-num">14</span>Best practices &amp; cost</a>
+    <a class="nav-item" href="#troubleshooting"data-group="aks"><span class="nav-num">15</span>Troubleshooting guide</a>
+
+    <div class="nav-section-label" data-group="labs">Labs &amp; interviews</div>
+    <a class="nav-item" href="#labs"        data-group="labs"><span class="nav-num">★</span>Hands-on labs</a>
+    <a class="nav-item" href="#comparison"  data-group="labs"><span class="nav-num">✓</span>Tool comparisons</a>
+    <a class="nav-item" href="#interview"   data-group="labs"><span class="nav-num">?</span>SRE interview Q&amp;A</a>
+    <a class="nav-item" href="#cleanup"     data-group="labs"><span class="nav-num">🗑</span>Cleanup</a>
   </div>
   <div class="sidebar-footer">© Enterprise Observability · 2025</div>
 </nav>
+
+<!-- ============================================================
+     MAIN
+============================================================ -->
 <main id="main">
-  <div id="topbar"><div class="topbar-title">📡 SRE observability stack</div><div><span class="pill">Prometheus</span><span class="pill">Loki</span><span class="pill">Tempo</span><span class="pill">OTel</span></div></div>
+  <div id="topbar">
+    <div class="topbar-title">📡 SRE observability stack</div>
+    <div class="pill-row">
+      <span class="pill">Prometheus</span>
+      <span class="pill">Loki</span>
+      <span class="pill">Tempo</span>
+      <span class="pill">OTel</span>
+    </div>
+  </div>
+
   <div class="hero">
     <div class="hero-eyebrow">for interns &amp; junior SREs</div>
-    <h1>Metrics · Logs · Traces <br>on AKS</h1>
+    <h1>Metrics · Logs · Traces<br>on AKS</h1>
     <p class="hero-desc">Complete guide: what, why, architecture, implementation, and real‑world incident workflow. Production‑ready observability stack with Prometheus, Loki, Tempo, OpenTelemetry, and Grafana.</p>
   </div>
+
   <div class="content">
 
-    <!-- SECTION 1 -->
+    <!-- ====================================================
+         SECTION 1 — Observability vs Monitoring
+    ==================================================== -->
     <section class="module-section" id="intro">
-      <div class="module-header"><div class="module-badge">1</div><div class="module-meta"><h2>Observability vs. Monitoring</h2><div class="module-desc">Detailed definitions and why observability is a system property</div></div></div>
+      <div class="module-header">
+        <div class="module-badge">1</div>
+        <div class="module-meta">
+          <h2>Observability vs. Monitoring</h2>
+          <div class="module-desc">Detailed definitions and why observability is a system property</div>
+        </div>
+      </div>
       <div class="card-grid">
-        <div class="card"><div class="card-title">📡 Monitoring</div><p>Collecting predefined metrics and checking against thresholds. It answers <strong>"Is something wrong?"</strong> Example: CPU > 90% → alert.</p></div>
-        <div class="card"><div class="card-title">🔬 Observability</div><p>Understanding internal state from external outputs (metrics, logs, traces). It lets you ask <strong>unknown questions</strong> during an incident. Example: "Why is the API slow?" – explore traces and logs to find root cause.</p><p>In control theory, a system is observable if its complete internal state can be reconstructed from its outputs.</p></div>
-        <div class="card"><div class="card-title">🎯 Why SREs need both</div><p>Monitoring for service level indicators (SLIs) and alerting. Observability for incident investigation (reduces MTTR).</p></div>
+        <div class="card">
+          <div class="card-title">📡 Monitoring</div>
+          <p>Collecting predefined metrics and checking against thresholds. It answers <strong>"Is something wrong?"</strong></p>
+          <p>Example: CPU &gt; 90% → alert.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🔬 Observability</div>
+          <p>Understanding internal state from external outputs (metrics, logs, traces). It lets you ask <strong>unknown questions</strong> during an incident.</p>
+          <p>Example: "Why is the API slow?" — explore traces and logs to find root cause.</p>
+          <p>In control theory, a system is observable if its complete internal state can be reconstructed from its outputs.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🎯 Why SREs need both</div>
+          <p>Monitoring for service level indicators (SLIs) and alerting. Observability for incident investigation (reduces MTTR).</p>
+        </div>
       </div>
       <div class="callout tip">💡 Key nuance: Monitoring is a <strong>subset</strong> of observability. Observability adds the exploration layer.</div>
     </section>
 
-    <!-- SECTION 2 -->
+    <!-- ====================================================
+         SECTION 2 — Three Pillars
+    ==================================================== -->
     <section class="module-section" id="pillars">
-      <div class="module-header"><div class="module-badge">2</div><div class="module-meta"><h2>The Three Pillars &amp; Cross‑Pillar Correlation</h2><div class="module-desc">Metrics, logs, traces – data formats, storage, and how they connect</div></div></div>
+      <div class="module-header">
+        <div class="module-badge">2</div>
+        <div class="module-meta">
+          <h2>The Three Pillars &amp; Cross‑Pillar Correlation</h2>
+          <div class="module-desc">Metrics, logs, traces – data formats, storage, and how they connect</div>
+        </div>
+      </div>
       <div class="card-grid">
-        <div class="card"><div class="card-title">🔢 Metrics</div><p><strong>Format:</strong> <code>&lt;metric_name&gt;{&lt;label&gt;=&lt;value&gt;} &lt;value&gt; &lt;timestamp&gt;</code><br><strong>Storage:</strong> Time‑series DB (Prometheus TSDB)<br><strong>Operations:</strong> rate(), increase(), histogram_quantile()<br><strong>Example:</strong> <code>http_requests_total{method="POST",status="500"}</code></p></div>
-        <div class="card"><div class="card-title">📄 Logs</div><p><strong>Format:</strong> Structured (JSON) or unstructured text with timestamp and level<br><strong>Storage:</strong> Object storage with index on labels (Loki)<br><strong>Operations:</strong> filtering, regex, aggregation<br><strong>Example:</strong> <code>{"time":"...","level":"error","trace_id":"abc123","msg":"payment failed"}</code></p></div>
-        <div class="card"><div class="card-title">🔗 Traces</div><p><strong>Format:</strong> Spans with trace_id, span_id, parent_span_id, duration, attributes<br><strong>Storage:</strong> Object storage with trace ID indexing (Tempo)<br><strong>Operations:</strong> trace retrieval, service graphs<br><strong>Example span:</strong> <code>span name="authenticate" duration=45ms attributes={user_id="123"}</code></p></div>
+        <div class="card">
+          <div class="card-title">🔢 Metrics</div>
+          <p><strong>Format:</strong> <code>&lt;metric_name&gt;{&lt;label&gt;=&lt;value&gt;} &lt;value&gt; &lt;timestamp&gt;</code></p>
+          <p><strong>Storage:</strong> Time‑series DB (Prometheus TSDB)</p>
+          <p><strong>Operations:</strong> <code>rate()</code>, <code>increase()</code>, <code>histogram_quantile()</code></p>
+          <p><strong>Example:</strong> <code>http_requests_total{method="POST",status="500"}</code></p>
+        </div>
+        <div class="card">
+          <div class="card-title">📄 Logs</div>
+          <p><strong>Format:</strong> Structured (JSON) or unstructured text with timestamp and level</p>
+          <p><strong>Storage:</strong> Object storage with index on labels (Loki)</p>
+          <p><strong>Operations:</strong> filtering, regex, aggregation</p>
+          <p><strong>Example:</strong> <code>{"time":"...","level":"error","trace_id":"abc123","msg":"payment failed"}</code></p>
+        </div>
+        <div class="card">
+          <div class="card-title">🔗 Traces</div>
+          <p><strong>Format:</strong> Spans with trace_id, span_id, parent_span_id, duration, attributes</p>
+          <p><strong>Storage:</strong> Object storage with trace ID indexing (Tempo)</p>
+          <p><strong>Operations:</strong> trace retrieval, service graphs</p>
+          <p><strong>Example span:</strong> <code>span name="authenticate" duration=45ms attributes={user_id="123"}</code></p>
+        </div>
       </div>
       <div class="callout info">🔗 Implementation pattern: Inject <code>trace_id</code> into logs. Use <code>trace_id</code> as a label in metrics (sparingly). Use exemplars to jump from metric to trace.</div>
     </section>
 
-    <!-- SECTION 3 -->
+    <!-- ====================================================
+         SECTION 3 — Instrumentation
+    ==================================================== -->
     <section class="module-section" id="instrumentation">
-      <div class="module-header"><div class="module-badge">3</div><div class="module-meta"><h2>Instrumentation – The Key to Observability</h2><div class="module-desc">What it is, why critical, and how to do it</div></div></div>
-      <div class="card"><div class="card-title">📝 What is instrumentation?</div><p>Adding code to your application to emit telemetry data (metrics, logs, traces). Without instrumentation, you cannot observe internal behaviour – it's like adding sensors to a machine.</p><p><strong>Why critical for SREs:</strong> You cannot debug what you cannot measure. Instrumentation must be a first‑class feature, not an afterthought.</p></div>
+      <div class="module-header">
+        <div class="module-badge">3</div>
+        <div class="module-meta">
+          <h2>Instrumentation – The Key to Observability</h2>
+          <div class="module-desc">What it is, why critical, and how to do it</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📝 What is instrumentation?</div>
+        <p>Adding code to your application to emit telemetry data (metrics, logs, traces). Without instrumentation, you cannot observe internal behaviour — it's like adding sensors to a machine.</p>
+        <p><strong>Why critical for SREs:</strong> You cannot debug what you cannot measure. Instrumentation must be a first‑class feature, not an afterthought.</p>
+      </div>
       <div class="callout tip">💡 Best practice: Always expose a <code>/metrics</code> endpoint and add trace propagation headers. Start with auto‑instrumentation, then add manual spans for business‑critical operations.</div>
     </section>
 
-    <!-- SECTION 4: GRAFANA -->
+    <!-- ====================================================
+         SECTION 4 — Grafana
+    ==================================================== -->
     <section class="module-section" id="grafana">
-      <div class="module-header"><div class="module-badge">4</div><div class="module-meta"><h2>📈 Grafana – Visualization Layer</h2><div class="module-desc">Architecture, data sources, and unified dashboarding</div></div></div>
-      <div class="card"><div class="card-title">📖 What is Grafana?</div><p>Open‑source analytics and visualisation platform. Connects to multiple data sources (Prometheus, Loki, Tempo, Alertmanager) and renders dashboards.</p></div>
-      <div class="card"><div class="card-title">🏗️ Architecture</div><p><code>Browser (React) → Grafana Server (Go) → Data source plugins → Backend databases</code><br><strong>Components:</strong> Frontend (React), Backend server (auth, proxy), Plugins (Prometheus, Loki, Tempo), Alerting engine.</p></div>
+      <div class="module-header">
+        <div class="module-badge">4</div>
+        <div class="module-meta">
+          <h2>Grafana – Visualization Layer</h2>
+          <div class="module-desc">Architecture, data sources, and unified dashboarding</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📖 What is Grafana?</div>
+        <p>Open‑source analytics and visualisation platform. Connects to multiple data sources (Prometheus, Loki, Tempo, Alertmanager) and renders dashboards.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🏗️ Architecture</div>
+        <p><code>Browser (React) → Grafana Server (Go) → Data source plugins → Backend databases</code></p>
+        <p><strong>Components:</strong> Frontend (React), Backend server (auth, proxy), Plugins (Prometheus, Loki, Tempo), Alerting engine.</p>
+      </div>
       <div class="callout tip">🔗 <strong>Trace‑Log correlation (derived fields):</strong> In Loki datasource settings → Derived Fields → Name: <code>traceID</code>, Regex: <code>traceID=(\w+)</code>, URL: <code>${__value.raw}</code>, Data source: Tempo. Any log line containing a TraceID becomes a clickable link to the trace.</div>
     </section>
 
-    <!-- SECTION 5: PROMETHEUS (with diagram) -->
+    <!-- ====================================================
+         SECTION 5 — Prometheus
+    ==================================================== -->
     <section class="module-section" id="prometheus">
-      <div class="module-header"><div class="module-badge">5</div><div class="module-meta"><h2>📊 Prometheus – Metrics Monitoring</h2><div class="module-desc">Architecture, TSDB, PromQL, and AKS deployment</div></div></div>
-      <div class="card"><div class="card-title">📖 What is Prometheus?</div><p>Open‑source time‑series database and monitoring system. Uses a <strong>pull model</strong> – it scrapes metrics from HTTP endpoints (exporters).</p></div>
-      <div class="card"><div class="card-title">🏗️ Internal components</div><p>Discovery Manager (K8s API, EC2), Scrape Manager (HTTP GET /metrics), TSDB (2h blocks, WAL), Query Engine (PromQL), Alertmanager sender.</p></div>
+      <div class="module-header">
+        <div class="module-badge">5</div>
+        <div class="module-meta">
+          <h2>Prometheus – Metrics Monitoring</h2>
+          <div class="module-desc">Architecture, TSDB, PromQL, and AKS deployment</div>
+        </div>
+      </div>
 
-      <!-- Prometheus Architecture SVG -->
+      <div class="card">
+        <div class="card-title">📖 What is Prometheus?</div>
+        <p>Open‑source time‑series database and monitoring system. Uses a <strong>pull model</strong> — it scrapes metrics from HTTP endpoints (exporters).</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🏗️ Internal components</div>
+        <p>Discovery Manager (K8s API, EC2), Scrape Manager (HTTP GET /metrics), TSDB (2h blocks, WAL), Query Engine (PromQL), Alertmanager sender.</p>
+      </div>
+
       <div class="svg-container">
         <svg viewBox="0 0 860 420" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif" aria-label="Prometheus architecture diagram">
           <defs>
@@ -252,22 +754,46 @@
       </div>
       <p class="diagram-caption"><strong>Data flow:</strong> The <strong>Service Discovery</strong> module continuously queries the Kubernetes API to maintain a live list of scrape targets. On each scrape interval, the <strong>Scrape Manager</strong> sends an HTTP GET to every target's <code>/metrics</code> endpoint. Scraped samples flow into the <strong>TSDB</strong> (2h blocks + WAL). The <strong>Query Engine</strong> evaluates PromQL queries from Grafana or the Rule Manager. The <strong>Rule Manager</strong> evaluates alerting rules and sends alerts to Alertmanager.</p>
 
-      <div class="card"><div class="card-title">📝 PromQL essentials</div><p><code>rate(http_requests_total[5m])</code> – per‑second average increase (use for counters).<br><code>histogram_quantile(0.95, sum(rate(request_duration_bucket[5m])) by (le))</code> – 95th percentile latency.<br><code>sum by (pod) (container_memory_usage_bytes)</code> – aggregated by pod label.</p></div>
-      <!-- Code block will float right -->
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" aria-label="Copy code" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+      <div class="card">
+        <div class="card-title">📝 PromQL essentials</div>
+        <p><code>rate(http_requests_total[5m])</code> — per‑second average increase (use for counters).</p>
+        <p><code>histogram_quantile(0.95, sum(rate(request_duration_bucket[5m])) by (le))</code> — 95th percentile latency.</p>
+        <p><code>sum by (pod) (container_memory_usage_bytes)</code> — aggregated by pod label.</p>
+      </div>
+
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code class="language-bash">helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
   --namespace monitoring --create-namespace \
   --set grafana.service.type=LoadBalancer \
   --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.storageClassName=managed-premium \
-  --set prometheus.prometheusSpec.retention=15d</code></pre></div>
+  --set prometheus.prometheusSpec.retention=15d</code></pre>
+      </div>
     </section>
 
-    <!-- SECTION 6: ALERTMANAGER -->
+    <!-- ====================================================
+         SECTION 6 — Alertmanager
+    ==================================================== -->
     <section class="module-section" id="alertmanager">
-      <div class="module-header"><div class="module-badge">6</div><div class="module-meta"><h2>⚠️ Alertmanager – Alert Routing &amp; Notifications</h2><div class="module-desc">Grouping, inhibition, silences, and receivers</div></div></div>
-      <div class="card"><div class="card-title">📖 What is Alertmanager?</div><p>Handles alerts sent by Prometheus. It deduplicates, groups, silences, and routes alerts to receivers (Slack, PagerDuty, email).</p></div>
-      <div class="card"><div class="card-title">🏗️ Processing pipeline</div><p>Prometheus sends alert → Alertmanager receives → group (same alertname/cluster) → inhibit (suppress low‑priority) → silence (maintenance) → route → receiver.</p></div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" aria-label="Copy code" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml">route:
+      <div class="module-header">
+        <div class="module-badge">6</div>
+        <div class="module-meta">
+          <h2>Alertmanager – Alert Routing &amp; Notifications</h2>
+          <div class="module-desc">Grouping, inhibition, silences, and receivers</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📖 What is Alertmanager?</div>
+        <p>Handles alerts sent by Prometheus. It deduplicates, groups, silences, and routes alerts to receivers (Slack, PagerDuty, email).</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🏗️ Processing pipeline</div>
+        <p>Prometheus sends alert → Alertmanager receives → group (same alertname/cluster) → inhibit (suppress low‑priority) → silence (maintenance) → route → receiver.</p>
+      </div>
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code class="language-yaml">route:
   group_by: ['alertname', 'cluster']
   group_wait: 10s
   group_interval: 10s
@@ -280,15 +806,26 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
 receivers:
   - name: 'slack'
     slack_configs:
-      - api_url: 'https://hooks.slack.com/...'</code></pre></div>
+      - api_url: 'https://hooks.slack.com/...'</code></pre>
+      </div>
     </section>
 
-    <!-- SECTION 7: LOKI (with diagram) -->
+    <!-- ====================================================
+         SECTION 7 — Loki
+    ==================================================== -->
     <section class="module-section" id="loki">
-      <div class="module-header"><div class="module-badge">7</div><div class="module-meta"><h2>📜 Loki – Log Aggregation</h2><div class="module-desc">Architecture, LogQL, and cost‑effective log storage</div></div></div>
-      <div class="card"><div class="card-title">📖 What is Loki?</div><p>Horizontally scalable, cost‑effective log aggregation system. It <strong>indexes only labels</strong> (pod, namespace), not full text – 10x cheaper than Elasticsearch.</p></div>
+      <div class="module-header">
+        <div class="module-badge">7</div>
+        <div class="module-meta">
+          <h2>Loki – Log Aggregation</h2>
+          <div class="module-desc">Architecture, LogQL, and cost‑effective log storage</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📖 What is Loki?</div>
+        <p>Horizontally scalable, cost‑effective log aggregation system. It <strong>indexes only labels</strong> (pod, namespace), not full text — 10x cheaper than Elasticsearch.</p>
+      </div>
 
-      <!-- Loki Architecture SVG -->
       <div class="svg-container">
         <svg viewBox="0 0 860 400" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif" aria-label="Loki architecture diagram">
           <defs>
@@ -321,8 +858,15 @@ receivers:
       </div>
       <p class="diagram-caption"><strong>Data flow:</strong> Log agents push logs to the <strong>Distributor</strong>, which validates, rate-limits, and forwards to the appropriate <strong>Ingester</strong> based on label hashing. Ingesters compress logs into chunks and flush them to <strong>Object Storage</strong> (Azure Blob). The index maps labels to chunk locations. On query, the <strong>Query Frontend</strong> splits the request, <strong>Queriers</strong> fetch data from both live ingesters and object storage, and return merged results.</p>
 
-      <div class="card"><div class="card-title">📝 LogQL examples</div><p><code>{namespace="prod"} |= "error"</code> – filter logs containing "error".<br><code>rate({pod=~"web.*"} | json | line_format "{{.level}}" | = "error" [5m])</code> – error log rate.<br><code>{app="payment"} |~ "trace_id=abc123"</code> – correlate with trace.</p></div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" aria-label="Copy code" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">az storage account create -n mystorageaccount -g myRG --sku Standard_LRS --kind StorageV2
+      <div class="card">
+        <div class="card-title">📝 LogQL examples</div>
+        <p><code>{namespace="prod"} |= "error"</code> — filter logs containing "error".</p>
+        <p><code>rate({pod=~"web.*"} | json | line_format "{{.level}}" | = "error" [5m])</code> — error log rate.</p>
+        <p><code>{app="payment"} |~ "trace_id=abc123"</code> — correlate with trace.</p>
+      </div>
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code class="language-bash">az storage account create -n mystorageaccount -g myRG --sku Standard_LRS --kind StorageV2
 az storage container create --name loki-chunks --account-name mystorageaccount --auth-mode login
 
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -332,15 +876,26 @@ helm upgrade --install loki grafana/loki-stack \
   --set loki.storage.azure.accountName=mystorageaccount \
   --set loki.storage.azure.useManagedIdentity=true \
   --set loki.storage.azure.containerName=loki-chunks \
-  --set promtail.enabled=true</code></pre></div>
+  --set promtail.enabled=true</code></pre>
+      </div>
     </section>
 
-    <!-- SECTION 8: TEMPO (with diagram) -->
+    <!-- ====================================================
+         SECTION 8 — Tempo
+    ==================================================== -->
     <section class="module-section" id="tempo">
-      <div class="module-header"><div class="module-badge">8</div><div class="module-meta"><h2>⏱️ Tempo – Distributed Tracing</h2><div class="module-desc">Architecture, object storage backend, and trace correlation</div></div></div>
-      <div class="card"><div class="card-title">📖 What is Tempo?</div><p>High‑scale distributed tracing backend. It <strong>does not index span tags</strong> – only trace IDs. Storage cost is linear with number of spans, not number of tags.</p></div>
+      <div class="module-header">
+        <div class="module-badge">8</div>
+        <div class="module-meta">
+          <h2>Tempo – Distributed Tracing</h2>
+          <div class="module-desc">Architecture, object storage backend, and trace correlation</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📖 What is Tempo?</div>
+        <p>High‑scale distributed tracing backend. It <strong>does not index span tags</strong> — only trace IDs. Storage cost is linear with number of spans, not number of tags.</p>
+      </div>
 
-      <!-- Tempo Architecture SVG -->
       <div class="svg-container">
         <svg viewBox="0 0 860 410" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif" aria-label="Tempo distributed tracing architecture diagram">
           <defs>
@@ -376,23 +931,40 @@ helm upgrade --install loki grafana/loki-stack \
       </div>
       <p class="diagram-caption"><strong>Data flow:</strong> Spans are pushed to the <strong>Distributor</strong>, which hashes <code>trace_id</code> and forwards to a single <strong>Ingester</strong>. Ingesters buffer spans and flush complete traces to <strong>Object Storage</strong> (Azure Blob). The <strong>Compactor</strong> merges blocks and applies retention. Queries (by trace ID) go through the Query Frontend to Queriers, which fetch from both ingesters and object storage.</p>
 
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" aria-label="Copy code" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">az storage container create --name tempo-data --account-name mystorageaccount --auth-mode login
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code class="language-bash">az storage container create --name tempo-data --account-name mystorageaccount --auth-mode login
 
 helm upgrade --install tempo grafana/tempo \
   --namespace tempo --create-namespace \
   --set tempo.config.storage.trace.backend=azure \
   --set tempo.config.storage.trace.azure.container_name=tempo-data \
   --set tempo.config.storage.trace.azure.account_name=mystorageaccount \
-  --set tempo.config.storage.trace.azure.use_managed_identity=true</code></pre></div>
+  --set tempo.config.storage.trace.azure.use_managed_identity=true</code></pre>
+      </div>
     </section>
 
-    <!-- SECTION 9: OPENTELEMETRY COLLECTOR (with diagram) -->
+    <!-- ====================================================
+         SECTION 9 — OpenTelemetry
+    ==================================================== -->
     <section class="module-section" id="otel">
-      <div class="module-header"><div class="module-badge">9</div><div class="module-meta"><h2>🧰 OpenTelemetry &amp; Collector</h2><div class="module-desc">Unified instrumentation, OTLP, and collector pipeline</div></div></div>
-      <div class="card"><div class="card-title">📖 What is OpenTelemetry?</div><p>Single set of APIs, SDKs, and tools to generate and collect telemetry data (metrics, logs, traces). Vendor‑agnostic.</p></div>
-      <div class="card"><div class="card-title">🏗️ Collector architecture</div><p><code>Receivers → Processors → Exporters</code><br>Receivers: OTLP, Jaeger, Prometheus; Processors: batch, memory_limiter, attributes; Exporters: Prometheus, Loki, Tempo.</p></div>
+      <div class="module-header">
+        <div class="module-badge">9</div>
+        <div class="module-meta">
+          <h2>OpenTelemetry &amp; Collector</h2>
+          <div class="module-desc">Unified instrumentation, OTLP, and collector pipeline</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📖 What is OpenTelemetry?</div>
+        <p>Single set of APIs, SDKs, and tools to generate and collect telemetry data (metrics, logs, traces). Vendor‑agnostic.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🏗️ Collector architecture</div>
+        <p><code>Receivers → Processors → Exporters</code></p>
+        <p>Receivers: OTLP, Jaeger, Prometheus. Processors: batch, memory_limiter, attributes. Exporters: Prometheus, Loki, Tempo.</p>
+      </div>
 
-      <!-- OTel Collector Architecture SVG -->
       <div class="svg-container">
         <svg viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif" aria-label="OpenTelemetry Collector architecture diagram">
           <defs>
@@ -442,7 +1014,9 @@ helm upgrade --install tempo grafana/tempo \
       </div>
       <p class="diagram-caption"><strong>Data flow:</strong> Application SDKs or agents push telemetry to <strong>Receivers</strong> (OTLP, Prometheus, Jaeger). Data passes through a chain of <strong>Processors</strong> (batch, memory limiter, tail sampling) and then is sent to <strong>Exporters</strong> (Prometheus, Loki, Tempo). This collector decouples instrumentation from backend storage.</p>
 
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" aria-label="Copy code" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml">receivers:
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code class="language-yaml">receivers:
   otlp:
     protocols:
       grpc: { endpoint: 0.0.0.0:4317 }
@@ -457,14 +1031,25 @@ service:
   pipelines:
     metrics: { receivers: [otlp], processors: [batch], exporters: [prometheus] }
     logs:    { receivers: [otlp], processors: [batch], exporters: [otlphttp/loki] }
-    traces:  { receivers: [otlp], processors: [batch], exporters: [otlp/tempo] }</code></pre></div>
+    traces:  { receivers: [otlp], processors: [batch], exporters: [otlp/tempo] }</code></pre>
+      </div>
     </section>
 
-    <!-- SECTION 10: AKS SETUP -->
+    <!-- ====================================================
+         SECTION 10 — AKS Setup
+    ==================================================== -->
     <section class="module-section" id="azure-setup">
-      <div class="module-header"><div class="module-badge">10</div><div class="module-meta"><h2>☁️ AKS Prerequisites &amp; Workload Identity</h2><div class="module-desc">Azure setup, managed identities, storage roles</div></div></div>
-      <div class="callout warning">⚠️ Cost warning: AKS, storage accounts, identities incur costs. Delete when done.</div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" aria-label="Copy code" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">az login
+      <div class="module-header">
+        <div class="module-badge">10</div>
+        <div class="module-meta">
+          <h2>AKS Prerequisites &amp; Workload Identity</h2>
+          <div class="module-desc">Azure setup, managed identities, storage roles</div>
+        </div>
+      </div>
+      <div class="callout warning">⚠️ Cost warning: AKS, storage accounts, and identities incur Azure costs. Delete resources when done.</div>
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code class="language-bash">az login
 az group create --name myRG --location eastus
 az aks create -g myRG -n observability-cluster --node-count 2 --enable-workload-identity --generate-ssh-keys
 az aks get-credentials -g myRG -n observability-cluster
@@ -484,21 +1069,51 @@ az identity federated-credential create --name loki-federated --identity-name lo
 az identity federated-credential create --name tempo-federated --identity-name tempo-storage-id -g myRG \
   --issuer $OIDC_ISSUER_URL --subject system:serviceaccount:tempo:tempo
 
-kubectl annotate serviceaccount -n loki loki azure.workload.identity/client-id=$(az identity show -g myRG -n loki-storage-id --query clientId -o tsv)
-kubectl annotate serviceaccount -n tempo tempo azure.workload.identity/client-id=$(az identity show -g myRG -n tempo-storage-id --query clientId -o tsv)</code></pre></div>
+kubectl annotate serviceaccount -n loki loki \
+  azure.workload.identity/client-id=$(az identity show -g myRG -n loki-storage-id --query clientId -o tsv)
+kubectl annotate serviceaccount -n tempo tempo \
+  azure.workload.identity/client-id=$(az identity show -g myRG -n tempo-storage-id --query clientId -o tsv)</code></pre>
+      </div>
     </section>
 
-    <!-- SECTION 11 -->
+    <!-- ====================================================
+         SECTION 11 — Helm Deploy
+    ==================================================== -->
     <section class="module-section" id="helm-deploy">
-      <div class="module-header"><div class="module-badge">11</div><div class="module-meta"><h2>Deploy the complete stack</h2><div class="module-desc">Ordered installation and verification</div></div></div>
-      <ol><li>Prometheus + Grafana (section 5)</li><li>Loki + Promtail (section 7)</li><li>Tempo (section 8)</li><li>OpenTelemetry Collector (section 9)</li><li>Grafana datasources &amp; derived fields (section 4)</li></ol>
+      <div class="module-header">
+        <div class="module-badge">11</div>
+        <div class="module-meta">
+          <h2>Deploy the complete stack</h2>
+          <div class="module-desc">Ordered installation and verification</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Deployment order</div>
+        <ol>
+          <li>Prometheus + Grafana (section 5)</li>
+          <li>Loki + Promtail (section 7)</li>
+          <li>Tempo (section 8)</li>
+          <li>OpenTelemetry Collector (section 9)</li>
+          <li>Grafana datasources &amp; derived fields (section 4)</li>
+        </ol>
+      </div>
       <div class="callout lab">🧪 Verification: <code>kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090</code> → check targets; <code>kubectl port-forward -n loki svc/loki-gateway 3100:80</code> → /ready; <code>kubectl port-forward -n tempo svc/tempo-query-frontend 3200:3200</code> → /ready.</div>
     </section>
 
-    <!-- SECTION 12: SAMPLE APP -->
+    <!-- ====================================================
+         SECTION 12 — Sample App
+    ==================================================== -->
     <section class="module-section" id="sampleapp">
-      <div class="module-header"><div class="module-badge">12</div><div class="module-meta"><h2>🐍 Sample instrumented Flask app</h2><div class="module-desc">Python + OpenTelemetry → traces and logs</div></div></div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">python</span><button class="copy-btn" aria-label="Copy code" onclick="copyCode(this)">Copy</button></div><pre><code class="language-python"># app.py – full OpenTelemetry instrumentation
+      <div class="module-header">
+        <div class="module-badge">12</div>
+        <div class="module-meta">
+          <h2>Sample instrumented Flask app</h2>
+          <div class="module-desc">Python + OpenTelemetry → traces and logs</div>
+        </div>
+      </div>
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code class="language-python"># app.py – full OpenTelemetry instrumentation
 from flask import Flask
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -508,10 +1123,16 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.resources import Resource
 import logging, time, random
 
-logging.basicConfig(level=logging.INFO, format='{"time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s", "traceID": "%(otelTraceId)s"}')
+logging.basicConfig(
+    level=logging.INFO,
+    format='{"time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s", "traceID": "%(otelTraceId)s"}'
+)
 resource = Resource.create(attributes={"service.name": "flask-app"})
 trace.set_tracer_provider(TracerProvider(resource=resource))
-otlp_exporter = OTLPSpanExporter(endpoint="otel-collector.observability.svc.cluster.local:4317", insecure=True)
+otlp_exporter = OTLPSpanExporter(
+    endpoint="otel-collector.observability.svc.cluster.local:4317",
+    insecure=True
+)
 trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(otlp_exporter))
 
 app = Flask(__name__)
@@ -522,7 +1143,8 @@ def hello():
     tracer = trace.get_tracer(__name__)
     with tracer.start_as_current_span("hello-span"):
         time.sleep(random.uniform(0.01, 0.1))
-        logging.info("Hello endpoint called", extra={"otelTraceId": trace.get_current_span().get_span_context().trace_id})
+        logging.info("Hello endpoint called",
+                     extra={"otelTraceId": trace.get_current_span().get_span_context().trace_id})
         return "Hello, observability!"
 
 @app.route('/slow')
@@ -532,85 +1154,242 @@ def slow():
         delay = random.uniform(0.5, 2.0)
         span.set_attribute("delay_seconds", delay)
         time.sleep(delay)
-        logging.warning("Slow endpoint took %.2f seconds", delay, extra={"otelTraceId": trace.get_current_span().get_span_context().trace_id})
+        logging.warning("Slow endpoint took %.2f seconds", delay,
+                        extra={"otelTraceId": trace.get_current_span().get_span_context().trace_id})
         return f"Waited {delay:.2f}s"
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)</code></pre></div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" aria-label="Copy code" onclick="copyCode(this)">Copy</button></div><pre><code class="language-dockerfile">FROM python:3.10-slim
+    app.run(host='0.0.0.0', port=5000)</code></pre>
+      </div>
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code class="language-dockerfile">FROM python:3.10-slim
 WORKDIR /app
 RUN pip install flask opentelemetry-distro opentelemetry-exporter-otlp
 RUN opentelemetry-bootstrap -a install
 COPY app.py .
-CMD ["opentelemetry-instrument", "python", "app.py"]</code></pre></div>
+CMD ["opentelemetry-instrument", "python", "app.py"]</code></pre>
+      </div>
       <div class="callout lab">🧪 Test correlation: <code>kubectl run load --image=curlimages/curl --rm -it -- /bin/sh -c "while true; do curl http://flask-app:5000/slow; sleep 1; done"</code>. In Grafana, find a slow trace → click TraceID → see correlated log.</div>
     </section>
 
-    <!-- SECTION 13: INCIDENT -->
+    <!-- ====================================================
+         SECTION 13 — Incident
+    ==================================================== -->
     <section class="module-section" id="incident">
-      <div class="module-header"><div class="module-badge">13</div><div class="module-meta"><h2>Incident response walkthrough</h2><div class="module-desc">500 errors → alert → exemplar → trace → log → RCA</div></div></div>
-      <div class="card"><div class="card-title">🔥 Scenario</div><p>Error rate spikes to 10%. Alert <code>HighErrorRate</code> fires (Prometheus rule).</p><p><strong>Step 1:</strong> Grafana dashboard shows error rate per endpoint – <code>/payment</code> is culprit.<br><strong>Step 2:</strong> Click exemplar on metric panel → opens Tempo trace.<br><strong>Step 3:</strong> Trace shows <code>payment-service</code> calling external bank API with 4s timeout (normal 200ms).<br><strong>Step 4:</strong> In trace, click "Logs for this span" → Loki returns logs with same trace_id: "bank API timeout, retries exhausted".<br><strong>Step 5:</strong> Root cause: external dependency throttling. Remediation: circuit breaker + fallback.</p></div>
-    </section>
-
-    <!-- SECTION 14: BEST PRACTICES -->
-    <section class="module-section" id="best-practices">
-      <div class="module-header"><div class="module-badge">14</div><div class="module-meta"><h2>Production best practices &amp; cost</h2><div class="module-desc">Cardinality, sampling, retention, security</div></div></div>
-      <div class="card-grid">
-        <div class="card"><div class="card-title">🏷️ Cardinality control</div><p>Never use labels with unbounded values (user_id, trace_id). Use recording rules to aggregate.</p></div>
-        <div class="card"><div class="card-title">🎚️ Sampling</div><p>Tail‑based sampling in OTel Collector: keep traces with errors or high latency, drop healthy ones.</p></div>
-        <div class="card"><div class="card-title">💾 Retention</div><p>Prometheus 15d, Loki/Tempo 30d on object storage. Use Azure lifecycle management to tier cool/archive.</p></div>
-        <div class="card"><div class="card-title">🔒 Security</div><p>Enable RBAC, use Azure AD for Grafana, restrict network policies, enable HTTPS with cert-manager.</p></div>
+      <div class="module-header">
+        <div class="module-badge">13</div>
+        <div class="module-meta">
+          <h2>Incident response walkthrough</h2>
+          <div class="module-desc">500 errors → alert → exemplar → trace → log → RCA</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔥 Scenario: 10% error rate spike</div>
+        <p>Alert <code>HighErrorRate</code> fires from a Prometheus alerting rule.</p>
+        <p><strong>Step 1:</strong> Grafana dashboard shows error rate per endpoint — <code>/payment</code> is culprit.</p>
+        <p><strong>Step 2:</strong> Click exemplar on metric panel → opens Tempo trace.</p>
+        <p><strong>Step 3:</strong> Trace shows <code>payment-service</code> calling external bank API with 4s timeout (normal 200ms).</p>
+        <p><strong>Step 4:</strong> In trace, click "Logs for this span" → Loki returns logs with same trace_id: <em>"bank API timeout, retries exhausted"</em>.</p>
+        <p><strong>Step 5:</strong> Root cause confirmed: external dependency throttling. Remediation: circuit breaker + fallback.</p>
       </div>
     </section>
 
-    <!-- SECTION 15: TROUBLESHOOTING -->
+    <!-- ====================================================
+         SECTION 14 — Best Practices
+    ==================================================== -->
+    <section class="module-section" id="best-practices">
+      <div class="module-header">
+        <div class="module-badge">14</div>
+        <div class="module-meta">
+          <h2>Production best practices &amp; cost</h2>
+          <div class="module-desc">Cardinality, sampling, retention, security</div>
+        </div>
+      </div>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">🏷️ Cardinality control</div>
+          <p>Never use labels with unbounded values (user_id, trace_id). Use recording rules to pre-aggregate high-cardinality metrics.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🎚️ Sampling</div>
+          <p>Tail‑based sampling in OTel Collector: keep traces with errors or high latency, drop healthy ones to reduce storage costs.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">💾 Retention</div>
+          <p>Prometheus 15d, Loki/Tempo 30d on object storage. Use Azure lifecycle management to tier to cool/archive storage.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🔒 Security</div>
+          <p>Enable RBAC, use Azure AD for Grafana, restrict network policies, enable HTTPS with cert-manager.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================
+         SECTION 15 — Troubleshooting
+    ==================================================== -->
     <section class="module-section" id="troubleshooting">
-      <div class="module-header"><div class="module-badge">15</div><div class="module-meta"><h2>Troubleshooting guide</h2></div></div>
+      <div class="module-header">
+        <div class="module-badge">15</div>
+        <div class="module-meta">
+          <h2>Troubleshooting guide</h2>
+          <div class="module-desc">Common issues and diagnostic commands</div>
+        </div>
+      </div>
       <table class="compare-table">
-        <thead><tr><th>Problem</th><th>Likely cause</th><th>Check</th></tr></thead>
+        <thead>
+          <tr><th>Problem</th><th>Likely cause</th><th>Check</th></tr>
+        </thead>
         <tbody>
-          <tr><td>Prometheus target down</td><td>Network policy, misconfigured service monitor</td><td><code>kubectl get servicemonitor -A</code>, telnet target port</td></tr>
+          <tr><td>Prometheus target down</td><td>Network policy, misconfigured ServiceMonitor</td><td><code>kubectl get servicemonitor -A</code>, telnet target port</td></tr>
           <tr><td>Loki missing logs</td><td>Promtail not running or wrong label selector</td><td><code>kubectl logs -n loki promtail-xxx</code>, check Loki distributor logs</td></tr>
           <tr><td>Tempo trace not found</td><td>Trace ID not propagated, OTLP exporter wrong endpoint</td><td>Check application logs for <code>trace_id</code>, verify OTel collector endpoint</td></tr>
-          <tr><td>Workload identity 403</td><td>Missing role assignment or federated credential</td><td>Check <code>az role assignment list</code>, verify service account annotation</td></tr>
+          <tr><td>Workload Identity 403</td><td>Missing role assignment or federated credential</td><td><code>az role assignment list</code>, verify service account annotation</td></tr>
         </tbody>
       </table>
     </section>
 
-    <!-- LABS -->
+    <!-- ====================================================
+         LABS
+    ==================================================== -->
     <section class="module-section" id="labs">
-      <div class="module-header"><div class="module-badge">★</div><div class="module-meta"><h2>🧪 Hands‑on labs for interns</h2><div class="module-desc">Learn by doing</div></div></div>
-      <div class="qa-section"><div class="qa-header">🎓 Lab 1: Metric spike investigation</div><div class="qa-item"><button class="qa-q" role="button" aria-expanded="false" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Run nginx: <code>kubectl run nginx --image=nginx</code>. 2. Install stress: <code>kubectl exec -it nginx -- bash -c "apt update &amp;&amp; apt install -y stress &amp;&amp; stress --cpu 2"</code>. 3. In Grafana, query <code>rate(container_cpu_usage_seconds_total{pod="nginx"}[5m])</code>. 4. Observe spike. 5. Correlate with Loki logs.</div></div></div>
-      <div class="qa-section"><div class="qa-header">🎓 Lab 2: Trace a slow request</div><div class="qa-item"><button class="qa-q" role="button" aria-expanded="false" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Deploy Flask app. 2. Run load: <code>hey -z 30s -c 5 http://flask-app/slow</code>. 3. In Grafana Explore → Tempo → search traces with latency > 1s. 4. Open trace – see slow span. 5. Click derived field to view log.</div></div></div>
+      <div class="module-header">
+        <div class="module-badge">★</div>
+        <div class="module-meta">
+          <h2>Hands‑on labs for interns</h2>
+          <div class="module-desc">Learn by doing</div>
+        </div>
+      </div>
+
+      <div class="qa-section">
+        <div class="qa-header">🎓 Lab 1: Metric spike investigation</div>
+        <div class="qa-item">
+          <button class="qa-q" aria-expanded="false" onclick="toggleQA(this)">
+            <span class="qa-q-icon"><svg viewBox="0 0 8 12"><polyline points="1.5,1 6.5,6 1.5,11" fill="none" stroke="#6e6e73" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            Lab steps
+          </button>
+          <div class="qa-a">
+            1. Run nginx: <code>kubectl run nginx --image=nginx</code><br>
+            2. Install stress: <code>kubectl exec -it nginx -- bash -c "apt update &amp;&amp; apt install -y stress &amp;&amp; stress --cpu 2"</code><br>
+            3. In Grafana, query <code>rate(container_cpu_usage_seconds_total{pod="nginx"}[5m])</code><br>
+            4. Observe the spike in the dashboard.<br>
+            5. Correlate with Loki logs for the same pod.
+          </div>
+        </div>
+      </div>
+
+      <div class="qa-section">
+        <div class="qa-header">🎓 Lab 2: Trace a slow request</div>
+        <div class="qa-item">
+          <button class="qa-q" aria-expanded="false" onclick="toggleQA(this)">
+            <span class="qa-q-icon"><svg viewBox="0 0 8 12"><polyline points="1.5,1 6.5,6 1.5,11" fill="none" stroke="#6e6e73" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            Lab steps
+          </button>
+          <div class="qa-a">
+            1. Deploy Flask app from Section 12.<br>
+            2. Run load: <code>hey -z 30s -c 5 http://flask-app/slow</code><br>
+            3. In Grafana Explore → Tempo → search traces with latency &gt; 1s.<br>
+            4. Open a trace — see the slow span and its attributes.<br>
+            5. Click derived field to view the correlated log entry in Loki.
+          </div>
+        </div>
+      </div>
+
       <div class="callout lab">🧪 <strong>Final project:</strong> Set up the full stack, instrument a two‑service app, build a Grafana dashboard with RED metrics, Loki logs panel, and Tempo trace view.</div>
     </section>
 
-    <!-- COMPARISON -->
+    <!-- ====================================================
+         COMPARISON
+    ==================================================== -->
     <section class="module-section" id="comparison">
-      <div class="module-header"><div class="module-badge">✓</div><div class="module-meta"><h2>Why This Stack Over ELK and Traditional Monitoring</h2><div class="module-desc">Cost, scalability, and correlation advantages</div></div></div>
+      <div class="module-header">
+        <div class="module-badge">✓</div>
+        <div class="module-meta">
+          <h2>Why This Stack Over ELK and Traditional Monitoring</h2>
+          <div class="module-desc">Cost, scalability, and correlation advantages</div>
+        </div>
+      </div>
       <table class="compare-table">
-        <thead><tr><th>Aspect</th><th>ELK (Elasticsearch, Logstash, Kibana)</th><th>LGTM Stack (Loki, Grafana, Tempo, Mimir)</th></tr></thead>
+        <thead>
+          <tr><th>Aspect</th><th>ELK (Elasticsearch, Logstash, Kibana)</th><th>LGTM Stack (Loki, Grafana, Tempo, Mimir)</th></tr>
+        </thead>
         <tbody>
-          <tr><td>Log indexing cost</td><td>Full‑text index of every log field (expensive)</td><td>Index only labels (cheap, designed for cloud storage)</td></tr>
-          <tr><td>Storage</td><td>Requires fast local SSD or Elastic Cloud ($$$)</td><td>Object storage (S3 – $0.023/GB)</td></tr>
-          <tr><td>Tracing</td><td>No native tracing (requires APM, separate)</td><td>Tempo integrated, works with OTel</td></tr>
-          <tr><td>Metrics</td><td>No native metrics (requires Metricbeat + separate cluster)</td><td>Native Prometheus/Mimir</td></tr>
+          <tr><td>Log indexing cost</td><td>Full‑text index of every log field (expensive at scale)</td><td>Index only labels — cheap, designed for cloud object storage</td></tr>
+          <tr><td>Storage</td><td>Requires fast local SSD or Elastic Cloud ($$$)</td><td>Object storage (Azure Blob ~$0.018/GB)</td></tr>
+          <tr><td>Tracing</td><td>No native tracing; requires APM add-on (separate cost)</td><td>Tempo integrated, works natively with OTel</td></tr>
+          <tr><td>Metrics</td><td>No native metrics; requires Metricbeat + separate cluster</td><td>Native Prometheus/Mimir, same Grafana UI</td></tr>
         </tbody>
       </table>
     </section>
 
-    <!-- INTERVIEW -->
+    <!-- ====================================================
+         INTERVIEW
+    ==================================================== -->
     <section class="module-section" id="interview">
-      <div class="module-header"><div class="module-badge">?</div><div class="module-meta"><h2>SRE interview questions &amp; answers</h2></div></div>
-      <div class="qa-section"><div class="qa-header">🎤 Question 1</div><div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How would you debug a sudden 10% error rate?</button><div class="qa-a">Use RED metrics: isolate endpoint → exemplar → trace → logs. Confirm root cause (e.g., DB timeout).</div></div></div>
-      <div class="qa-section"><div class="qa-header">🎤 Question 2</div><div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Why Loki over Elasticsearch?</button><div class="qa-a">Cost: Loki indexes only labels, stores logs in cheap object storage. Elasticsearch indexes full text, expensive to run at scale.</div></div></div>
-      <div class="qa-section"><div class="qa-header">🎤 Question 3</div><div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How does Tempo avoid indexing cost?</button><div class="qa-a">Tempo uses <code>trace_id</code> as lookup key in object storage blocks. No indexing of span attributes, making it cheap for high‑volume tracing.</div></div></div>
+      <div class="module-header">
+        <div class="module-badge">?</div>
+        <div class="module-meta">
+          <h2>SRE interview questions &amp; answers</h2>
+          <div class="module-desc">Common questions with structured answers</div>
+        </div>
+      </div>
+
+      <div class="qa-section">
+        <div class="qa-header">🎤 Question 1</div>
+        <div class="qa-item">
+          <button class="qa-q" aria-expanded="false" onclick="toggleQA(this)">
+            <span class="qa-q-icon"><svg viewBox="0 0 8 12"><polyline points="1.5,1 6.5,6 1.5,11" fill="none" stroke="#6e6e73" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            How would you debug a sudden 10% error rate?
+          </button>
+          <div class="qa-a">
+            Use RED metrics (Rate, Errors, Duration): isolate the affected endpoint via a Grafana dashboard. Click an exemplar on the error rate graph to jump into Tempo and see the specific trace. Follow the trace to identify the failing service or dependency. Use the derived field link to view correlated Loki logs with the same trace_id to get the exact error message. Confirm root cause (e.g., DB timeout, downstream throttling) and implement remediation.
+          </div>
+        </div>
+      </div>
+
+      <div class="qa-section">
+        <div class="qa-header">🎤 Question 2</div>
+        <div class="qa-item">
+          <button class="qa-q" aria-expanded="false" onclick="toggleQA(this)">
+            <span class="qa-q-icon"><svg viewBox="0 0 8 12"><polyline points="1.5,1 6.5,6 1.5,11" fill="none" stroke="#6e6e73" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            Why Loki over Elasticsearch?
+          </button>
+          <div class="qa-a">
+            Cost is the primary driver. Loki indexes only stream labels (pod, namespace, app), not full log text — so storage is just cheap object storage (Azure Blob / S3). Elasticsearch indexes every field of every log, which requires expensive SSDs and significant compute to maintain the inverted index. At scale, Loki can be 5–10× cheaper. The trade-off: full-text search in Loki is slower (it scans compressed chunks), so it's best paired with structured (JSON) logs and meaningful labels.
+          </div>
+        </div>
+      </div>
+
+      <div class="qa-section">
+        <div class="qa-header">🎤 Question 3</div>
+        <div class="qa-item">
+          <button class="qa-q" aria-expanded="false" onclick="toggleQA(this)">
+            <span class="qa-q-icon"><svg viewBox="0 0 8 12"><polyline points="1.5,1 6.5,6 1.5,11" fill="none" stroke="#6e6e73" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            How does Tempo avoid indexing cost?
+          </button>
+          <div class="qa-a">
+            Tempo uses <code>trace_id</code> as the sole lookup key. Spans are stored in Parquet blocks in object storage, named by trace_id prefix. There is no index of span attributes (no inverted index, no tags index). A query by trace_id goes directly to the correct block. This makes Tempo much cheaper than Jaeger (which indexes every tag in Cassandra/Elasticsearch). The trade-off is that tag-based search (e.g., "find all traces where http.status=500") requires TraceQL with a full block scan, or a separate metrics-based approach.
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- CLEANUP -->
+    <!-- ====================================================
+         CLEANUP
+    ==================================================== -->
     <section class="module-section" id="cleanup">
-      <div class="module-header"><div class="module-badge">🗑️</div><div class="module-meta"><h2>Complete cleanup – avoid costs</h2></div></div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">helm uninstall kube-prometheus-stack -n monitoring
+      <div class="module-header">
+        <div class="module-badge">🗑</div>
+        <div class="module-meta">
+          <h2>Complete cleanup – avoid costs</h2>
+          <div class="module-desc">Remove all Azure resources created in this tutorial</div>
+        </div>
+      </div>
+      <div class="callout warning">⚠️ Run this to stop all Azure billing for resources created in this tutorial.</div>
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code class="language-bash">helm uninstall kube-prometheus-stack -n monitoring
 helm uninstall loki -n loki
 helm uninstall tempo -n tempo
 kubectl delete ns monitoring loki tempo
@@ -618,19 +1397,125 @@ az aks delete -g myRG -n observability-cluster --yes
 az storage account delete -n mystorageaccount -g myRG --yes
 az identity delete -g myRG -n loki-storage-id
 az identity delete -g myRG -n tempo-storage-id
-az group delete -n myRG --yes --no-wait</code></pre></div>
+az group delete -n myRG --yes --no-wait</code></pre>
+      </div>
     </section>
 
-  </div>
-</main>
+  </div><!-- /content -->
+</main><!-- /main -->
+
 <button id="back-top" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- ============================================================
+     SCRIPTS
+============================================================ -->
 <script>
-  function copyCode(btn) { const code = btn.closest('.code-wrapper').querySelector('code'); navigator.clipboard.writeText(code.innerText); btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000); }
-  function toggleQA(btn) { const item = btn.closest('.qa-item'); const open = item.classList.contains('open'); document.querySelectorAll('.qa-item').forEach(i => { i.classList.remove('open'); const btnInside = i.querySelector('.qa-q'); if (btnInside) btnInside.setAttribute('aria-expanded', 'false'); }); if (!open) { item.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); } else { btn.setAttribute('aria-expanded', 'false'); } }
-  function filterNav(q) { const lower = q.toLowerCase(); document.querySelectorAll('.nav-item').forEach(n => { n.style.display = n.textContent.toLowerCase().includes(lower) ? '' : 'none'; }); }
-  document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());
-  window.addEventListener('scroll', () => { const percent = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100; document.getElementById('progress').style.width = percent + '%'; document.getElementById('back-top').classList.toggle('visible', window.scrollY > 300); });
-  const sections = document.querySelectorAll('.module-section'); const navs = document.querySelectorAll('.nav-item'); const obs = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) { navs.forEach(n => n.classList.remove('active')); const active = document.querySelector(`.nav-item[href="#${e.target.id}"]`); if (active) active.classList.add('active'); } }); }, { rootMargin: '-20% 0px -60% 0px' }); sections.forEach(s => obs.observe(s));
+  // ─── Highlight.js (run once, guard against double-init) ──────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('pre code:not(.hljs)').forEach(block => {
+      hljs.highlightElement(block);
+    });
+  });
+
+  // ─── Copy button ─────────────────────────────────────────────────────────
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrapper').querySelector('code');
+    const text = code.innerText;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => flashCopied(btn));
+    } else {
+      // Fallback for non-HTTPS / older browsers
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); flashCopied(btn); } catch(e) {}
+      document.body.removeChild(ta);
+    }
+  }
+  function flashCopied(btn) {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  }
+
+  // ─── QA accordion (allows multiple open simultaneously) ──────────────────
+  function toggleQA(btn) {
+    const item = btn.closest('.qa-item');
+    const isOpen = item.classList.contains('open');
+    item.classList.toggle('open', !isOpen);
+    btn.setAttribute('aria-expanded', String(!isOpen));
+  }
+
+  // ─── Sidebar nav search (hides items AND orphaned section labels) ─────────
+  function filterNav(q) {
+    const lower = q.trim().toLowerCase();
+    const groups = {};
+
+    // Build group → items mapping
+    document.querySelectorAll('.nav-item').forEach(item => {
+      const group = item.dataset.group;
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(item);
+    });
+
+    // Show/hide items
+    Object.entries(groups).forEach(([group, items]) => {
+      let anyVisible = false;
+      items.forEach(item => {
+        const match = !lower || item.textContent.toLowerCase().includes(lower);
+        item.classList.toggle('hidden', !match);
+        if (match) anyVisible = true;
+      });
+      // Show/hide the section label for this group
+      const label = document.querySelector(`.nav-section-label[data-group="${group}"]`);
+      if (label) label.classList.toggle('hidden', !anyVisible);
+    });
+  }
+
+  // ─── Mobile sidebar ───────────────────────────────────────────────────────
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mob-overlay');
+    const open = sidebar.classList.toggle('open');
+    overlay.classList.toggle('visible', open);
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('mob-overlay').classList.remove('visible');
+  }
+
+  // ─── Progress bar + back-to-top ───────────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY;
+    const total = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (total > 0 ? (scrolled / total * 100) : 0) + '%';
+    document.getElementById('back-top').classList.toggle('visible', scrolled > 300);
+  }, { passive: true });
+
+  // ─── Active nav highlight via IntersectionObserver ────────────────────────
+  const sections = document.querySelectorAll('.module-section[id]');
+  const navItems = document.querySelectorAll('.nav-item[href]');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const match = document.querySelector(`.nav-item[href="#${entry.target.id}"]`);
+        if (match) {
+          match.classList.add('active');
+          // Scroll sidebar to keep active item visible
+          match.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      }
+    });
+  }, {
+    rootMargin: '-10% 0px -80% 0px',
+    threshold: 0
+  });
+
+  sections.forEach(s => observer.observe(s));
 </script>
 </body>
 </html>
