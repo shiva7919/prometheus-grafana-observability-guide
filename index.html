@@ -3,51 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Observability for SREs | Intern’s Guide to Prometheus, Loki, Tempo, OpenTelemetry on AKS</title>
-  <!-- Apple-style fonts -->
+  <title>Observability for SREs | Intern’s Complete Guide to Prometheus, Loki, Tempo, OpenTelemetry on AKS</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=SF+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: #ffffff;
-      color: #1d1d1f;
-      line-height: 1.5;
-      scroll-behavior: smooth;
-    }
-    /* progress bar */
-    #progress {
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 3px;
-      background: #0071e3;
-      width: 0%;
-      z-index: 1000;
-      transition: width 0.1s;
-    }
-    /* sidebar */
-    #sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 280px;
-      height: 100vh;
-      background: #fafafc;
-      border-right: 1px solid #e9e9ef;
-      overflow-y: auto;
-      z-index: 100;
-      font-size: 14px;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: #ffffff; color: #1d1d1f; line-height: 1.5; scroll-behavior: smooth; }
+    #progress { position: fixed; top: 0; left: 0; height: 3px; background: #0071e3; width: 0%; z-index: 1000; transition: width 0.1s; }
+    #sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100vh; background: #fafafc; border-right: 1px solid #e9e9ef; overflow-y: auto; z-index: 100; font-size: 14px; }
     .sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid #e9e9ef; }
     .logo-icon { font-size: 28px; margin-bottom: 6px; }
     .logo-text { font-weight: 700; font-size: 18px; letter-spacing: -0.3px; background: linear-gradient(135deg, #1d1d1f, #0071e3); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -57,14 +25,12 @@
     .sidebar-search input:focus { border-color: #0071e3; box-shadow: 0 0 0 2px rgba(0,113,227,0.2); }
     .sidebar-nav { padding: 8px 0 20px; }
     .nav-section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6e6e73; padding: 16px 20px 6px; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 8px 20px; text-decoration: none; color: #1d1d1f; font-weight: 500; border-left: 3px solid transparent; transition: 0.2s; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 8px 20px; text-decoration: none; color: #1d1d1f; font-weight: 500; border-left: 3px solid transparent; transition: 0.2s; cursor: pointer; }
     .nav-item:hover { background: #f5f5f7; }
     .nav-item.active { border-left-color: #0071e3; background: #f5f5f7; color: #0071e3; }
     .nav-num { width: 24px; height: 24px; background: #e8e8ed; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
     .nav-item.active .nav-num { background: #0071e3; color: white; }
     .sidebar-footer { font-size: 11px; padding: 20px; border-top: 1px solid #e9e9ef; color: #86868b; }
-
-    /* main content */
     #main { margin-left: 280px; min-height: 100vh; }
     #topbar { position: sticky; top: 0; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #e9e9ef; padding: 0 40px; height: 64px; display: flex; align-items: center; justify-content: space-between; z-index: 90; }
     .topbar-title { font-weight: 600; font-size: 17px; }
@@ -94,6 +60,7 @@
     .callout { border-radius: 16px; padding: 16px 20px; margin: 20px 0; display: flex; gap: 12px; border-left: 4px solid #0071e3; background: #f0f5ff; }
     .callout.tip { border-left-color: #34c759; background: #f0faf0; }
     .callout.lab { border-left-color: #af52de; background: #f8f0fc; }
+    .callout.warning { border-left-color: #ff9f0a; background: #fff8e7; }
     .table-wrap { overflow-x: auto; border-radius: 16px; border: 1px solid #e9e9ef; margin: 20px 0; }
     th { background: #f5f5f7; padding: 12px 16px; font-weight: 600; }
     td { padding: 12px 16px; border-top: 1px solid #e9e9ef; }
@@ -112,33 +79,28 @@
 <body>
 <div id="progress"></div>
 <nav id="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">🔭</div>
-    <div class="logo-text">observability<span style="font-weight:400">.sre</span></div>
-    <div class="sidebar-subtitle">Intern's guide · AKS edition</div>
-  </div>
+  <div class="sidebar-logo"><div class="logo-icon">🔭</div><div class="logo-text">observability<span style="font-weight:400">.sre</span></div><div class="sidebar-subtitle">Intern's complete guide · AKS</div></div>
   <div class="sidebar-search"><input type="text" id="search" placeholder="Search topics..." oninput="filterNav(this.value)"></div>
   <div class="sidebar-nav">
     <div class="nav-section-label">Foundations</div>
     <a class="nav-item" href="#intro"><span class="nav-num">1</span>Observability basics</a>
     <a class="nav-item" href="#prometheus"><span class="nav-num">2</span>Prometheus (metrics)</a>
-    <a class="nav-item" href="#loki"><span class="nav-num">3</span>Loki (logs)</a>
+    <a class="nav-item" href="#loki"><span class="nav-num">3</span>Loki + Promtail (logs)</a>
     <a class="nav-item" href="#tempo"><span class="nav-num">4</span>Tempo (traces)</a>
     <a class="nav-item" href="#otel"><span class="nav-num">5</span>OpenTelemetry</a>
-    <a class="nav-item" href="#grafana"><span class="nav-num">6</span>Grafana & Alerting</a>
+    <a class="nav-item" href="#grafana"><span class="nav-num">6</span>Grafana & correlation</a>
     <div class="nav-section-label">AKS Setup</div>
-    <a class="nav-item" href="#setup"><span class="nav-num">7</span>Deploy on AKS</a>
-    <a class="nav-item" href="#cleanup"><span class="nav-num">8</span>Cleanup & Delete</a>
+    <a class="nav-item" href="#prereqs"><span class="nav-num">7</span>Prerequisites & IAM</a>
+    <a class="nav-item" href="#deploy"><span class="nav-num">8</span>Deploy all components</a>
+    <a class="nav-item" href="#sampleapp"><span class="nav-num">9</span>Sample instrumented app</a>
+    <a class="nav-item" href="#cleanup"><span class="nav-num">10</span>Complete cleanup</a>
     <div class="nav-section-label">Labs</div>
     <a class="nav-item" href="#labs"><span class="nav-num">★</span>Hands‑on labs</a>
   </div>
   <div class="sidebar-footer">Azure Kubernetes Service · OpenTelemetry · 2025</div>
 </nav>
 <div id="main">
-  <div id="topbar">
-    <div class="topbar-title">📡 SRE observability stack</div>
-    <div><span class="pill">Prometheus</span><span class="pill">Loki</span><span class="pill">Tempo</span><span class="pill">OTel</span></div>
-  </div>
+  <div id="topbar"><div class="topbar-title">📡 SRE observability stack</div><div><span class="pill">Prometheus</span><span class="pill">Loki</span><span class="pill">Tempo</span><span class="pill">OTel</span></div></div>
   <div class="hero">
     <div class="hero-eyebrow">for interns & junior SREs</div>
     <h1>Metrics · Logs · Traces <br>on AKS</h1>
@@ -146,8 +108,7 @@
   </div>
   <div class="content">
     <!-- ========== INTRO ========== -->
-    <section class="module-section" id="intro">
-      <div class="module-header"><div class="module-badge">1</div><div class="module-meta"><h2>Observability – why it matters</h2><div class="module-desc">What is it? Why do we need it? Where is it used?</div></div></div>
+    <section class="module-section" id="intro"><div class="module-header"><div class="module-badge">1</div><div class="module-meta"><h2>Observability – why it matters</h2><div class="module-desc">What is it? Why do we need it? Where is it used?</div></div></div>
       <div class="card-grid">
         <div class="card"><div class="card-title">🔍 What is observability?</div><p>The ability to understand the internal state of a system by looking at its external outputs (metrics, logs, traces). Not just monitoring – it lets you ask <strong>unknown</strong> questions about failures.</p></div>
         <div class="card"><div class="card-title">🎯 Why SREs need it</div><p>To reduce Mean Time To Detection (MTTD) and Mean Time To Resolution (MTTR). Observability helps you pinpoint the root cause of a slowdown or outage without guessing.</p></div>
@@ -157,10 +118,9 @@
     </section>
 
     <!-- ========== PROMETHEUS ========== -->
-    <section class="module-section" id="prometheus">
-      <div class="module-header"><div class="module-badge">2</div><div class="module-meta"><h2>Prometheus – Metrics</h2><div class="module-desc">What, why, where, and how to implement on AKS</div></div></div>
+    <section class="module-section" id="prometheus"><div class="module-header"><div class="module-badge">2</div><div class="module-meta"><h2>Prometheus – Metrics</h2><div class="module-desc">What, why, where, and how to implement on AKS</div></div></div>
       <p><strong>What it is:</strong> Open‑source time‑series database and monitoring system. Pulls metrics from targets (pods, nodes, services) and stores them as labelled data points.<br><strong>Why needed:</strong> Metrics tell you the health of your system – CPU, memory, request rate, error count. Without metrics, you're flying blind.<br><strong>Where used:</strong> Inside every Kubernetes cluster, often as the primary data source for dashboards and alerts.</p>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Install kube-prometheus-stack on AKS (full monitoring suite)
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Add Helm repo and install kube-prometheus-stack
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
   --namespace monitoring --create-namespace \
@@ -172,117 +132,263 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
 kubectl delete ns monitoring</code></pre></div>
     </section>
 
-    <!-- ========== LOKI ========== -->
-    <section class="module-section" id="loki">
-      <div class="module-header"><div class="module-badge">3</div><div class="module-meta"><h2>Loki – Log Aggregation</h2><div class="module-desc">What, why, where, and how to set up with Azure Blob Storage</div></div></div>
+    <!-- ========== LOKI + PROMTAIL ========== -->
+    <section class="module-section" id="loki"><div class="module-header"><div class="module-badge">3</div><div class="module-meta"><h2>Loki + Promtail – Log Aggregation</h2><div class="module-desc">What, why, where, and how to set up with Azure Blob Storage and log collection</div></div></div>
       <p><strong>What it is:</strong> Horizontally scalable, cost‑effective log aggregation system inspired by Prometheus. It indexes only metadata (labels), not the full log text.<br><strong>Why needed:</strong> Logs are essential for debugging. Traditional systems (Elasticsearch) become expensive at scale. Loki reduces storage cost by ~10x.<br><strong>Where used:</strong> Alongside Prometheus in the same cluster; logs are stored in object storage (Azure Blob).</p>
       <div class="callout info">📌 <strong>For AKS:</strong> Loki needs Azure Blob Storage for chunks. Create a storage account and container before installing.</div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Add Grafana Helm repo
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Create storage account and container (run once)
+az storage account create -n mystorageaccount -g myRG --sku Standard_LRS --kind StorageV2
+az storage container create --name loki-chunks --account-name mystorageaccount --auth-mode login
+
+# Install Loki with Promtail enabled (logs collection)
 helm repo add grafana https://grafana.github.io/helm-charts
-# Install Loki in simple scalable mode with Azure backend
-helm upgrade --install loki grafana/loki \
+helm upgrade --install loki grafana/loki-stack \
   --namespace loki --create-namespace \
   --set loki.storage.type=azure \
-  --set loki.storage.azure.accountName=YOUR_STORAGE_ACCOUNT \
+  --set loki.storage.azure.accountName=mystorageaccount \
   --set loki.storage.azure.useManagedIdentity=true \
-  --set loki.storage.azure.containerName=loki-chunks</code></pre></div>
-      <p><strong>Delete Loki:</strong></p>
+  --set loki.storage.azure.containerName=loki-chunks \
+  --set promtail.enabled=true \
+  --set promtail.config.lokiAddress="http://loki-gateway.loki.svc.cluster.local:80"</code></pre></div>
+      <p><strong>Delete Loki & Promtail:</strong></p>
       <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">helm uninstall loki -n loki
 kubectl delete ns loki</code></pre></div>
     </section>
 
     <!-- ========== TEMPO ========== -->
-    <section class="module-section" id="tempo">
-      <div class="module-header"><div class="module-badge">4</div><div class="module-meta"><h2>Tempo – Distributed Tracing</h2><div class="module-desc">What, why, where, and how to implement with Azure Blob</div></div></div>
+    <section class="module-section" id="tempo"><div class="module-header"><div class="module-badge">4</div><div class="module-meta"><h2>Tempo – Distributed Tracing</h2><div class="module-desc">What, why, where, and how to implement with Azure Blob</div></div></div>
       <p><strong>What it is:</strong> High‑scale distributed tracing backend that stores traces in object storage. Uses TraceID to retrieve full request journeys.<br><strong>Why needed:</strong> Traces show you the exact path of a request across services. When a request is slow, traces pinpoint the slowest span (e.g., a database query).<br><strong>Where used:</strong> In microservices architectures, especially when you have more than 3 services.</p>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Install Tempo with Azure Blob storage backend
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Create storage container for Tempo
+az storage container create --name tempo-data --account-name mystorageaccount --auth-mode login
+
+# Install Tempo with Azure Blob storage backend
 helm upgrade --install tempo grafana/tempo \
   --namespace tempo --create-namespace \
   --set tempo.config.storage.trace.backend=azure \
   --set tempo.config.storage.trace.azure.container_name=tempo-data \
-  --set tempo.config.storage.trace.azure.account_name=YOUR_STORAGE_ACCOUNT \
+  --set tempo.config.storage.trace.azure.account_name=mystorageaccount \
   --set tempo.config.storage.trace.azure.use_managed_identity=true</code></pre></div>
       <p><strong>Delete:</strong></p>
       <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">helm uninstall tempo -n tempo
 kubectl delete ns tempo</code></pre></div>
     </section>
 
-    <!-- ========== OPENTELEMETRY ========== -->
-    <section class="module-section" id="otel">
-      <div class="module-header"><div class="module-badge">5</div><div class="module-meta"><h2>OpenTelemetry – Unified Instrumentation</h2><div class="module-desc">What, why, where, and how to configure the collector</div></div></div>
-      <p><strong>What it is:</strong> A single, vendor‑agnostic set of APIs, SDKs, and tools to generate and collect telemetry data (metrics, logs, traces).<br><strong>Why needed:</strong> Instead of using separate libraries for Prometheus (metrics), Loki (logs), and Tempo (traces), OTel gives you one way to instrument your code and forward data to any backend.<br><strong>Where used:</strong> In application code (Python, Go, Java, Node.js) and as a collector sidecar/gateway in the cluster.</p>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml"># OTel Collector configuration (configmap)
-receivers:
-  otlp:
-    protocols:
-      grpc: { endpoint: 0.0.0.0:4317 }
-      http: { endpoint: 0.0.0.0:4318 }
-processors:
-  batch: {}
-exporters:
-  prometheus: { endpoint: "0.0.0.0:8889" }
-  otlphttp/loki: { endpoint: "http://loki.loki.svc.cluster.local:3100/otlp" }
-  otlp/tempo: { endpoint: "tempo.tempo.svc.cluster.local:4317", tls: { insecure: true } }
-service:
-  pipelines:
-    metrics: { receivers: [otlp], processors: [batch], exporters: [prometheus] }
-    logs:    { receivers: [otlp], processors: [batch], exporters: [otlphttp/loki] }
-    traces:  { receivers: [otlp], processors: [batch], exporters: [otlp/tempo] }</code></pre></div>
-      <p><strong>Delete Collector:</strong> <code>kubectl delete deployment otel-collector -n observability</code></p>
+    <!-- ========== OPENTELEMETRY COLLECTOR ========== -->
+    <section class="module-section" id="otel"><div class="module-header"><div class="module-badge">5</div><div class="module-meta"><h2>OpenTelemetry Collector – Unified Pipeline</h2><div class="module-desc">What, why, where, and how to deploy the collector on AKS</div></div></div>
+      <p><strong>What it is:</strong> A vendor‑agnostic agent that receives OTLP telemetry, processes it (batch, filter, transform), and exports to multiple backends.<br><strong>Why needed:</strong> Decouples instrumentation from backend. You can change backends without modifying application code.<br><strong>Where used:</strong> As a DaemonSet (agent) or Deployment (gateway) in the cluster.</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Add OpenTelemetry Helm repo and install collector
+helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+helm upgrade --install otel-collector open-telemetry/opentelemetry-collector \
+  --namespace observability --create-namespace \
+  -f otel-collector-config.yaml
+
+# otel-collector-config.yaml content (save locally)
+cat > otel-collector-config.yaml <<EOF
+mode: deployment
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc: { endpoint: 0.0.0.0:4317 }
+        http: { endpoint: 0.0.0.0:4318 }
+  processors:
+    batch: {}
+  exporters:
+    prometheus:
+      endpoint: "0.0.0.0:8889"
+    otlphttp/loki:
+      endpoint: "http://loki.loki.svc.cluster.local:3100/otlp"
+    otlp/tempo:
+      endpoint: "tempo.tempo.svc.cluster.local:4317"
+      tls: { insecure: true }
+  service:
+    pipelines:
+      metrics: { receivers: [otlp], processors: [batch], exporters: [prometheus] }
+      logs:    { receivers: [otlp], processors: [batch], exporters: [otlphttp/loki] }
+      traces:  { receivers: [otlp], processors: [batch], exporters: [otlp/tempo] }
+EOF</code></pre></div>
+      <p><strong>Delete:</strong> <code>helm uninstall otel-collector -n observability && kubectl delete ns observability</code></p>
     </section>
 
-    <!-- ========== GRAFANA + ALERTING ========== -->
-    <section class="module-section" id="grafana">
-      <div class="module-header"><div class="module-badge">6</div><div class="module-meta"><h2>Grafana & Alertmanager</h2><div class="module-desc">Unified dashboards, alert rules, and silences</div></div></div>
-      <p><strong>Grafana</strong> visualises metrics, logs, and traces in one place. <strong>Alertmanager</strong> handles alert deduplication, grouping, and routing (Slack, PagerDuty, email). After deploying the stack, add data sources:</p>
-      <ul><li>Prometheus: <code>http://kube-prometheus-stack-prometheus.monitoring:9090</code></li><li>Loki: <code>http://loki-gateway.loki:80</code></li><li>Tempo: <code>http://tempo-query-frontend.tempo:3200</code></li></ul>
-      <div class="callout tip">🔗 <strong>Correlation:</strong> Configure derived fields in Loki to extract TraceID and link directly to Tempo traces.</div>
+    <!-- ========== GRAFANA & CORRELATION ========== -->
+    <section class="module-section" id="grafana"><div class="module-header"><div class="module-badge">6</div><div class="module-meta"><h2>Grafana Dashboards & Correlation</h2><div class="module-desc">Unified UI, data sources, and TraceID‑log linking</div></div></div>
+      <p>After installing kube-prometheus-stack, Grafana is already running. Expose it and add the missing data sources.</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Get Grafana admin password
+kubectl get secret -n monitoring kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 -d
+# Port‑forward for local access (or use LoadBalancer IP)
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80</code></pre></div>
+      <p><strong>Add Loki & Tempo datasources via Grafana UI:</strong></p>
+      <ul><li>Configuration → Data sources → Add data source → Loki → URL: <code>http://loki-gateway.loki:80</code> → Save & Test</li>
+      <li>Add Tempo → URL: <code>http://tempo-query-frontend.tempo:3200</code> → Save & Test</li></ul>
+      <div class="callout tip">🔗 <strong>TraceID‑Log correlation (derived fields):</strong> In Loki datasource settings, add a derived field:<br>
+      Name: <code>traceID</code>, Regex: <code>traceID=(\w+)</code>, URL: <code>${__value.raw}</code>, Data source: Tempo (UID). This turns every log line containing a TraceID into a clickable link to the trace.</div>
     </section>
 
-    <!-- ========== AKS SETUP ========== -->
-    <section class="module-section" id="setup">
-      <div class="module-header"><div class="module-badge">7</div><div class="module-meta"><h2>Deploy the complete stack on AKS</h2><div class="module-desc">Step‑by‑step from zero to running</div></div></div>
-      <div class="card-grid">
-        <div class="card"><div class="card-title">📋 Prerequisites</div><ul><li>Azure CLI, kubectl, Helm installed</li><li>An Azure subscription</li><li>Workload identity enabled on AKS (for Blob access)</li></ul></div>
-        <div class="card"><div class="card-title">🏗️ Create AKS cluster</div><div class="code-wrapper" style="margin:0"><pre><code class="language-bash">az aks create -g myRG -n observability-cluster --node-count 2 --enable-workload-identity --generate-ssh-keys
-az aks get-credentials -g myRG -n observability-cluster</code></pre></div></div>
-        <div class="card"><div class="card-title">🧪 Deploy all components</div><p>Follow the installation commands in sections 2–6. The order does not matter, but install Prometheus first so Grafana is ready.</p></div>
-      </div>
-      <div class="callout lab">🧪 <strong>Lab 1: Instrument a sample app</strong><br>Deploy a simple Python Flask app with OpenTelemetry auto‑instrumentation. Send traces to Tempo and logs to Loki. Then generate load and watch the unified Grafana dashboard.</div>
+    <!-- ========== AKS PREREQUISITES & IAM ========== -->
+    <section class="module-section" id="prereqs"><div class="module-header"><div class="module-badge">7</div><div class="module-meta"><h2>AKS Prerequisites & Workload Identity</h2><div class="module-desc">Azure setup, managed identities, and storage roles</div></div></div>
+      <div class="callout warning">⚠️ <strong>Cost warning:</strong> AKS cluster, storage accounts, and managed identities incur costs. Delete everything after the lab to avoid unexpected charges.</div>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># 1. Login to Azure
+az login
+az account set --subscription "your-subscription-id"
+
+# 2. Create resource group
+az group create --name myRG --location eastus
+
+# 3. Create AKS cluster with workload identity enabled
+az aks create -g myRG -n observability-cluster --node-count 2 --enable-workload-identity --generate-ssh-keys
+az aks get-credentials -g myRG -n observability-cluster
+
+# 4. Create user-assigned managed identity for Loki & Tempo
+az identity create -g myRG -n loki-storage-id
+az identity create -g myRG -n tempo-storage-id
+
+# 5. Assign Storage Blob Data Contributor role to each identity on the storage account
+STORAGE_ACCOUNT_ID=$(az storage account show -n mystorageaccount -g myRG --query id -o tsv)
+az role assignment create --assignee $(az identity show -g myRG -n loki-storage-id --query principalId -o tsv) \
+  --role "Storage Blob Data Contributor" --scope $STORAGE_ACCOUNT_ID
+az role assignment create --assignee $(az identity show -g myRG -n tempo-storage-id --query principalId -o tsv) \
+  --role "Storage Blob Data Contributor" --scope $STORAGE_ACCOUNT_ID
+
+# 6. Federate Kubernetes service accounts to Azure identities
+export OIDC_ISSUER_URL="$(az aks show -g myRG -n observability-cluster --query oidcIssuerProfile.issuerUrl -o tsv)"
+# For Loki
+az identity federated-credential create --name loki-federated --identity-name loki-storage-id -g myRG \
+  --issuer $OIDC_ISSUER_URL --subject system:serviceaccount:loki:loki
+# For Tempo
+az identity federated-credential create --name tempo-federated --identity-name tempo-storage-id -g myRG \
+  --issuer $OIDC_ISSUER_URL --subject system:serviceaccount:tempo:tempo
+
+# 7. Annotate the service accounts (run after installing Loki/Tempo)
+kubectl annotate serviceaccount -n loki loki azure.workload.identity/client-id=$(az identity show -g myRG -n loki-storage-id --query clientId -o tsv)
+kubectl annotate serviceaccount -n tempo tempo azure.workload.identity/client-id=$(az identity show -g myRG -n tempo-storage-id --query clientId -o tsv)</code></pre></div>
     </section>
 
-    <!-- ========== CLEANUP ========== -->
-    <section class="module-section" id="cleanup">
-      <div class="module-header"><div class="module-badge">8</div><div class="module-meta"><h2>Cleanup & Delete Everything</h2><div class="module-desc">Remove resources to avoid costs</div></div></div>
+    <!-- ========== DEPLOY ALL COMPONENTS ========== -->
+    <section class="module-section" id="deploy"><div class="module-header"><div class="module-badge">8</div><div class="module-meta"><h2>Deploy the complete stack</h2><div class="module-desc">Run all components in order</div></div></div>
+      <p>Follow this order to avoid missing dependencies:</p>
+      <ol>
+        <li>Deploy Prometheus + Grafana (section 2)</li>
+        <li>Deploy Loki + Promtail (section 3)</li>
+        <li>Deploy Tempo (section 4)</li>
+        <li>Deploy OpenTelemetry Collector (section 5)</li>
+        <li>Configure Grafana datasources and correlation (section 6)</li>
+      </ol>
+      <div class="callout lab">🧪 <strong>Verification:</strong> After deployment, port‑forward to each service and check endpoints:<br>
+      Prometheus: <code>kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090</code> → targets should be UP.<br>
+      Loki: <code>kubectl port-forward -n loki svc/loki-gateway 3100:80</code> → <code>curl http://localhost:3100/ready</code> → OK.<br>
+      Tempo: <code>kubectl port-forward -n tempo svc/tempo-query-frontend 3200:3200</code> → <code>curl http://localhost:3200/ready</code> → OK.</div>
+    </section>
+
+    <!-- ========== SAMPLE INSTRUMENTED APP ========== -->
+    <section class="module-section" id="sampleapp"><div class="module-header"><div class="module-badge">9</div><div class="module-meta"><h2>Sample instrumented Flask app</h2><div class="module-desc">Python + OpenTelemetry – sends traces to Tempo and logs to Loki</div></div></div>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-python"># app.py
+from flask import Flask
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.resources import Resource
+import logging, time, random
+
+# Configure logging to JSON (Loki likes structured logs)
+logging.basicConfig(level=logging.INFO, format='{"time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s", "traceID": "%(otelTraceId)s"}')
+
+resource = Resource.create(attributes={"service.name": "flask-app"})
+trace.set_tracer_provider(TracerProvider(resource=resource))
+otlp_exporter = OTLPSpanExporter(endpoint="otel-collector.observability.svc.cluster.local:4317", insecure=True)
+trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(otlp_exporter))
+
+app = Flask(__name__)
+FlaskInstrumentor().instrument_app(app)
+
+@app.route('/hello')
+def hello():
+    tracer = trace.get_tracer(__name__)
+    with tracer.start_as_current_span("hello-span"):
+        time.sleep(random.uniform(0.01, 0.1))
+        logging.info("Hello endpoint called", extra={"otelTraceId": trace.get_current_span().get_span_context().trace_id})
+        return "Hello, observability!"
+
+@app.route('/slow')
+def slow():
+    tracer = trace.get_tracer(__name__)
+    with tracer.start_as_current_span("slow-span") as span:
+        delay = random.uniform(0.5, 2.0)
+        span.set_attribute("delay_seconds", delay)
+        time.sleep(delay)
+        logging.warning("Slow endpoint took %.2f seconds", delay, extra={"otelTraceId": trace.get_current_span().get_span_context().trace_id})
+        return f"Waited {delay:.2f}s"
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)</code></pre></div>
+      <p>Dockerfile and Kubernetes deployment:</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-dockerfile">FROM python:3.10-slim
+WORKDIR /app
+RUN pip install flask opentelemetry-distro opentelemetry-exporter-otlp
+RUN opentelemetry-bootstrap -a install
+COPY app.py .
+CMD ["opentelemetry-instrument", "python", "app.py"]</code></pre></div>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml"># deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata: name: flask-app
+spec:
+  replicas: 1
+  selector: matchLabels: app: flask-app
+  template:
+    metadata: labels: app: flask-app
+    spec:
+      containers:
+      - name: app
+        image: yourregistry/flask-otel:latest
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata: name: flask-app
+spec:
+  selector: app: flask-app
+  ports:
+  - port: 5000
+    targetPort: 5000</code></pre></div>
+      <p><strong>Delete sample app:</strong> <code>kubectl delete -f deployment.yaml</code></p>
+      <div class="callout lab">🧪 <strong>Test correlation:</strong> Generate load: <code>kubectl run load-generator --image=curlimages/curl --rm -it -- /bin/sh -c "while true; do curl http://flask-app:5000/slow; sleep 1; done"</code>. In Grafana, find a slow trace, click the trace ID, and see the correlated log line.</div>
+    </section>
+
+    <!-- ========== COMPLETE CLEANUP ========== -->
+    <section class="module-section" id="cleanup"><div class="module-header"><div class="module-badge">10</div><div class="module-meta"><h2>Complete cleanup – avoid costs</h2><div class="module-desc">Remove every resource created</div></div></div>
+      <div class="callout warning">💰 <strong>Important:</strong> Running AKS cluster, storage accounts, and managed identities incur costs. Run these commands after finishing the lab.</div>
       <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># 1. Uninstall Helm releases
 helm uninstall kube-prometheus-stack -n monitoring
 helm uninstall loki -n loki
 helm uninstall tempo -n tempo
+helm uninstall otel-collector -n observability
+
 # 2. Delete namespaces
-kubectl delete ns monitoring loki tempo
-# 3. Delete AKS cluster
+kubectl delete ns monitoring loki tempo observability
+
+# 3. Delete the AKS cluster
 az aks delete -g myRG -n observability-cluster --yes
-# 4. Delete Azure Blob storage accounts (optional)
-az storage account delete -n mystorageaccount -g myRG --yes</code></pre></div>
-      <div class="callout info">💰 Always verify that no PVCs or external resources are left behind. Check Azure Portal for lingering disks.</div>
+
+# 4. Delete storage account (and all containers)
+az storage account delete -n mystorageaccount -g myRG --yes
+
+# 5. Delete managed identities
+az identity delete -g myRG -n loki-storage-id
+az identity delete -g myRG -n tempo-storage-id
+
+# 6. Delete resource group (optional, deletes everything at once)
+az group delete -n myRG --yes --no-wait</code></pre></div>
     </section>
 
     <!-- ========== HANDS‑ON LABS ========== -->
-    <section class="module-section" id="labs">
-      <div class="module-header"><div class="module-badge">★</div><div class="module-meta"><h2>Hands‑on labs for interns</h2><div class="module-desc">Learn by doing – realistic failure scenarios</div></div></div>
-      <div class="qa-section">
-        <div class="qa-header">🎓 Lab 1: Metric spike investigation</div>
-        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Deploy a sample nginx pod. 2. Generate CPU load: <code>kubectl exec -it nginx -- bash -c "stress --cpu 2"</code>. 3. Open Grafana → Prometheus → query <code>rate(container_cpu_usage_seconds_total[5m])</code>. 4. Observe spike. 5. Identify the pod label, correlate with logs from Loki.</div></div>
-      </div>
-      <div class="qa-section">
-        <div class="qa-header">🎓 Lab 2: Trace a slow request</div>
-        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Deploy a two‑service app (frontend + backend). 2. Instrument both with OTel. 3. Add artificial sleep in the backend. 4. Call the endpoint. 5. In Grafana → Tempo → search for traces with latency > 1s. 6. Inspect the span that consumes the most time.</div></div>
-      </div>
-      <div class="qa-section">
-        <div class="qa-header">🎓 Lab 3: SLO error budget alert</div>
-        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Create a Prometheus alert rule that fires when error rate > 5% for 2 minutes. 2. Use a load generator to produce 10% 500 errors. 3. Check Alertmanager UI (port 9093) and see the alert state change from PENDING to FIRING. 4. Configure a Slack webhook and verify notification.</div></div>
-      </div>
-      <div class="callout lab">🧪 <strong>Final project (week‑long):</strong> Set up the full AKS stack, instrument a real microservices demo (e.g., Online Boutique by Google), and build a Grafana dashboard that shows RED (Rate, Errors, Duration) for each service, plus a logs panel that filters errors, and a trace panel that links from slow requests.</div>
+    <section class="module-section" id="labs"><div class="module-header"><div class="module-badge">★</div><div class="module-meta"><h2>Hands‑on labs for interns</h2><div class="module-desc">Learn by doing – realistic failure scenarios</div></div></div>
+      <div class="qa-section"><div class="qa-header">🎓 Lab 1: Metric spike investigation</div><div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Deploy a sample nginx pod: <code>kubectl run nginx --image=nginx</code>. 2. Generate CPU load: <code>kubectl exec -it nginx -- bash -c "apt update && apt install -y stress && stress --cpu 2"</code>. 3. In Grafana, query <code>rate(container_cpu_usage_seconds_total{pod="nginx"}[5m])</code>. 4. Observe spike. 5. Correlate with logs from Loki (Promtail collects container logs).</div></div></div>
+      <div class="qa-section"><div class="qa-header">🎓 Lab 2: Trace a slow request</div><div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Deploy the Flask app above. 2. Generate load to <code>/slow</code> with <code>hey -z 30s -c 5 http://flask-app/slow</code>. 3. In Grafana Explore → Tempo → search for traces with latency > 1s. 4. Click a trace – identify the span <code>slow-span</code>. 5. Use the derived field to open the corresponding Loki log.</div></div></div>
+      <div class="qa-section"><div class="qa-header">🎓 Lab 3: SLO error budget alert</div><div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Create a PrometheusRule: <code>cat &lt;&lt;EOF | kubectl apply -f -</code> (prometheusrule yaml). 2. Use a load generator that returns HTTP 500 for 10% of requests. 3. Watch Alertmanager UI at port 9093. 4. Configure Slack webhook (optional).</div></div></div>
+      <div class="callout lab">🧪 <strong>Final project (week‑long):</strong> Set up the full AKS stack, instrument the sample Flask app, add a second service (e.g., Redis), and build a Grafana dashboard that shows RED metrics, logs filtered by traceID, and a service graph from Tempo.</div>
     </section>
   </div>
 </div>
