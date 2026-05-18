@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Observability for SREs | Intern’s Complete Guide (AKS)</title>
+  <title>Observability for SREs | Tool Architecture & Implementation on AKS</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=SF+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -49,6 +49,7 @@
     .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 20px 0; }
     .diagram-block { background: #f9f9fb; border: 1px solid #e9e9ef; border-radius: 16px; padding: 20px; font-family: 'SF Mono', monospace; font-size: 12px; overflow-x: auto; margin: 20px 0; }
     .diagram-label { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #0071e3; margin-bottom: 12px; display: block; }
+    .tool-icon { font-size: 16px; margin-right: 4px; vertical-align: middle; }
     .code-wrapper { margin: 20px 0; border-radius: 14px; border: 1px solid #e9e9ef; overflow: hidden; background: #fafafc; }
     .code-header { background: #f2f2f5; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e9e9ef; }
     .code-lang { font-size: 11px; font-weight: 600; color: #0071e3; }
@@ -59,16 +60,6 @@
     .callout.tip { border-left-color: #34c759; background: #f0faf0; }
     .callout.lab { border-left-color: #af52de; background: #f8f0fc; }
     .callout.warning { border-left-color: #ff9f0a; background: #fff8e7; }
-    .table-wrap { overflow-x: auto; border-radius: 16px; border: 1px solid #e9e9ef; margin: 20px 0; }
-    th { background: #f5f5f7; padding: 12px 16px; font-weight: 600; text-align: left; }
-    td { padding: 12px 16px; border-top: 1px solid #e9e9ef; }
-    .qa-section { background: #ffffff; border: 1px solid #e9e9ef; border-radius: 20px; overflow: hidden; margin: 30px 0; }
-    .qa-header { background: #f5f5f7; padding: 16px 20px; font-weight: 600; }
-    .qa-q { width: 100%; text-align: left; padding: 14px 20px; background: none; border: none; font-weight: 500; display: flex; align-items: center; gap: 12px; cursor: pointer; border-top: 1px solid #e9e9ef; }
-    .qa-q-icon svg { width: 10px; fill: #6e6e73; transition: transform 0.2s; }
-    .qa-item.open .qa-q-icon svg { transform: rotate(90deg); }
-    .qa-a { padding: 0 20px 0 52px; max-height: 0; overflow: hidden; transition: 0.3s; color: #424245; font-size: 14px; }
-    .qa-item.open .qa-a { max-height: 400px; padding: 0 20px 20px 52px; }
     #back-top { position: fixed; bottom: 24px; right: 24px; background: #0071e3; border: none; width: 44px; height: 44px; border-radius: 44px; color: white; font-size: 20px; cursor: pointer; opacity: 0; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 200; }
     #back-top.visible { opacity: 1; }
     @media (max-width: 768px) { #sidebar { transform: translateX(-280px); transition: 0.2s; } #main { margin-left: 0; } .hero h1 { font-size: 32px; } .content { padding: 0 20px 60px; } }
@@ -104,7 +95,7 @@
   <div class="hero">
     <div class="hero-eyebrow">for interns & junior SREs</div>
     <h1>Metrics · Logs · Traces <br>on AKS</h1>
-    <p class="hero-desc">Understand what, why, architecture, and how to implement the modern observability stack. Full end‑to‑end guide with deep explanations and real‑world labs.</p>
+    <p class="hero-desc">Understand what, why, architecture, and how to implement the modern observability stack. Full end‑to‑end guide with tool images and real‑world labs.</p>
   </div>
   <div class="content">
 
@@ -117,19 +108,19 @@
         <div class="card"><div class="card-title">🎯 SRE relevance</div><p>SREs need both: monitoring for service level indicators (SLIs) and observability for incident investigation. Observability reduces Mean Time To Resolution (MTTR).</p></div>
       </div>
       <div class="diagram-block">
-        <div class="diagram-label">▸ The three pillars of observability</div>
+        <div class="diagram-label">▸ The three pillars of observability (with tool icons)</div>
         <pre>
-   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-   │   Metrics   │   │    Logs     │   │   Traces    │
-   │ (numerical) │   │  (events)   │   │ (requests)  │
-   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘
-          │                 │                 │
-          └─────────────────┼─────────────────┘
-                            ▼
-                    ┌───────────────┐
-                    │   Grafana     │
-                    │  (unified)    │
-                    └───────────────┘
+   ┌───────────────────┐   ┌───────────────────┐   ┌───────────────────┐
+   │ 🔢 Metrics        │   │ 📄 Logs           │   │ 🔗 Traces         │
+   │ 📊 Prometheus     │   │ 📜 Loki           │   │ ⏱️ Tempo          │
+   └─────────┬─────────┘   └─────────┬─────────┘   └─────────┬─────────┘
+             │                       │                       │
+             └───────────────────────┼───────────────────────┘
+                                     ▼
+                       ┌─────────────────────────┐
+                       │  📈 Grafana             │
+                       │  (Unified visualisation)│
+                       └─────────────────────────┘
         </pre>
       </div>
     </section>
@@ -143,19 +134,23 @@
         <p><strong>Why it’s critical for SREs:</strong> You cannot debug what you cannot measure. Instrumentation must be a first‑class feature, not an afterthought.</p>
       </div>
       <div class="diagram-block">
-        <div class="diagram-label">▸ Instrumentation types</div>
+        <div class="diagram-label">▸ Instrumentation types with OpenTelemetry</div>
         <pre>
-   Auto‑instrumentation   →   Manual instrumentation
-   (language agent)            (custom spans/metrics)
-         │                              │
-         └──────────┬───────────────────┘
-                    ▼
-            OpenTelemetry SDK
-                    │
-        (metrics, logs, traces)
-                    │
-                    ▼
-            OTel Collector  →  Backends (Prometheus/Loki/Tempo)
+   🧩 Auto‑instrumentation       ✍️ Manual instrumentation
+   (language agent)                  (custom spans/metrics)
+            │                                   │
+            └──────────────┬────────────────────┘
+                           ▼
+                🧰 OpenTelemetry SDK
+                           │
+           (metrics, logs, traces – OTLP)
+                           │
+                           ▼
+                🚀 OTel Collector
+                           │
+           ┌───────────────┼───────────────┐
+           ▼               ▼               ▼
+        📊 Prometheus   📜 Loki         ⏱️ Tempo
         </pre>
       </div>
       <div class="callout tip">💡 <strong>Best practice:</strong> Always expose a `/metrics` endpoint and add trace propagation headers. Start with auto‑instrumentation, then add manual spans for business‑critical operations.</div>
@@ -163,21 +158,21 @@
 
     <!-- SECTION 3: PROMETHEUS (METRICS) -->
     <section class="module-section" id="prometheus">
-      <div class="module-header"><div class="module-badge">3</div><div class="module-meta"><h2>Prometheus – Metrics</h2><div class="module-desc">What, why, architecture, components, and AKS implementation</div></div></div>
+      <div class="module-header"><div class="module-badge">3</div><div class="module-meta"><h2>📊 Prometheus – Metrics</h2><div class="module-desc">What, why, architecture, components, and AKS implementation</div></div></div>
       <div class="card"><div class="card-title">📖 What is Prometheus?</div><p>Open‑source time‑series database and monitoring system. It uses a <strong>pull model</strong> – it scrapes metrics from HTTP endpoints (exporters).</p></div>
       <div class="card"><div class="card-title">🎯 Why we need it</div><p>Metrics tell you the health of your system – request rate, error rate, latency, resource usage. Without Prometheus, you have no historical view of performance.</p></div>
-      <div class="card"><div class="card-title">🏗️ Architecture & Components</div>
+      <div class="card"><div class="card-title">🏗️ Architecture & Components <span class="tool-icon">📊</span></div>
         <div class="diagram-block" style="margin-top:12px">
           <pre>
    ┌─────────────────────────────────────────────────────┐
-   │                   Prometheus Server                  │
+   │              📊 Prometheus Server                    │
    │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │
    │  │Retrieval │  │   TSDB   │  │  HTTP API (9090) │   │
    │  │ (scrape) │  │ (storage)│  │  PromQL queries  │   │
    │  └────┬─────┘  └────┬─────┘  └────────┬─────────┘   │
    │       │             │                 │             │
    │  ┌────▼─────┐  ┌────▼─────┐  ┌────────▼─────────┐   │
-   │  │ Rules   │  │ WAL      │  │ Alertmanager     │   │
+   │  │ Rules   │  │ WAL      │  │ ⚠️ Alertmanager  │   │
    │  │ Engine  │  │ (write‑  │  │ (alerts)         │   │
    │  └─────────┘  │ ahead log)│  └──────────────────┘   │
    │               └──────────┘                           │
@@ -185,7 +180,7 @@
           ▲ scrape (HTTP)                      ▲ query
           │                                     │
    ┌──────┴──────┐                        ┌────┴────┐
-   │  Exporters  │                        │ Grafana │
+   │  Exporters  │                        │ 📈 Grafana│
    │ Node, cAdvisor, custom app           └─────────┘
    └─────────────┘
           </pre>
@@ -203,14 +198,14 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
 
     <!-- SECTION 4: LOKI + PROMTAIL (LOGS) -->
     <section class="module-section" id="loki">
-      <div class="module-header"><div class="module-badge">4</div><div class="module-meta"><h2>Loki – Log Aggregation</h2><div class="module-desc">What, why, architecture, components, and AKS setup</div></div></div>
+      <div class="module-header"><div class="module-badge">4</div><div class="module-meta"><h2>📜 Loki – Log Aggregation</h2><div class="module-desc">What, why, architecture, components, and AKS setup</div></div></div>
       <div class="card"><div class="card-title">📖 What is Loki?</div><p>Horizontally scalable, cost‑effective log aggregation system inspired by Prometheus. It <strong>indexes only labels</strong>, not the full log text – making it 10x cheaper than Elasticsearch.</p></div>
       <div class="card"><div class="card-title">🎯 Why we need it</div><p>Logs are essential for debugging. Loki integrates seamlessly with Prometheus labels, so you can correlate metrics and logs using the same metadata (pod, namespace, job).</p></div>
-      <div class="card"><div class="card-title">🏗️ Architecture & Components</div>
+      <div class="card"><div class="card-title">🏗️ Architecture & Components <span class="tool-icon">📜</span></div>
         <div class="diagram-block" style="margin-top:12px">
           <pre>
    ┌─────────────────────────────────────────────────────┐
-   │                      Loki                           │
+   │                    📜 Loki                           │
    │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │
    │  │ Distributor│→│ Ingester │→│ Querier          │   │
    │  │(receive)  │  │(write to │  │(query from store│   │
@@ -219,15 +214,15 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
    │                └────┬─────┘           │             │
    │                     │                 │             │
    │               ┌─────▼─────┐      ┌────▼─────┐       │
-   │               │ Azure Blob│      │  Loki    │       │
-   │               │ Storage   │      │ Gateway  │       │
-   │               └───────────┘      │ (query)  │       │
-   │                                  └──────────┘       │
+   │               │ ☁️ Azure  │      │  Loki    │       │
+   │               │ Blob      │      │ Gateway  │       │
+   │               │ Storage   │      │ (query)  │       │
+   │               └───────────┘      └──────────┘       │
    └─────────────────────────────────────────────────────┘
           ▲ push (LogQL)                     ▲ query
           │                                   │
    ┌──────┴──────┐                      ┌────┴────┐
-   │  Promtail   │                      │ Grafana │
+   │  Promtail   │                      │ 📈 Grafana│
    │ (DaemonSet) │                      └─────────┘
    └─────────────┘
           ▲ tail
@@ -256,14 +251,14 @@ helm upgrade --install loki grafana/loki-stack \
 
     <!-- SECTION 5: TEMPO (TRACES) -->
     <section class="module-section" id="tempo">
-      <div class="module-header"><div class="module-badge">5</div><div class="module-meta"><h2>Tempo – Distributed Tracing</h2><div class="module-desc">What, why, architecture, components, and AKS setup</div></div></div>
+      <div class="module-header"><div class="module-badge">5</div><div class="module-meta"><h2>⏱️ Tempo – Distributed Tracing</h2><div class="module-desc">What, why, architecture, components, and AKS setup</div></div></div>
       <div class="card"><div class="card-title">📖 What is Tempo?</div><p>High‑scale distributed tracing backend that stores traces in object storage. It uses <strong>TraceID hashing</strong> to locate traces – no expensive indexing.</p></div>
       <div class="card"><div class="card-title">🎯 Why we need it</div><p>Traces show the exact path of a request across services. When a request is slow, traces pinpoint the slowest span (e.g., a database query). Essential for microservices.</p></div>
-      <div class="card"><div class="card-title">🏗️ Architecture & Components</div>
+      <div class="card"><div class="card-title">🏗️ Architecture & Components <span class="tool-icon">⏱️</span></div>
         <div class="diagram-block" style="margin-top:12px">
           <pre>
    ┌─────────────────────────────────────────────────────┐
-   │                      Tempo                          │
+   │                    ⏱️ Tempo                          │
    │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │
    │  │ Distributor│→│ Ingester │→│ Query Frontend   │   │
    │  │(OTLP)    │  │(WAL +    │  │(trace retrieval)│   │
@@ -271,15 +266,15 @@ helm upgrade --install loki grafana/loki-stack \
    │                └────┬─────┘           │             │
    │                     │                 │             │
    │               ┌─────▼─────┐      ┌────▼─────┐       │
-   │               │ Azure Blob│      │  Tempo   │       │
-   │               │ Storage   │      │  Query   │       │
-   │               │ (blocks)  │      │  (gRPC)  │       │
+   │               │ ☁️ Azure  │      │  Tempo   │       │
+   │               │ Blob      │      │  Query   │       │
+   │               │ Storage   │      │  (gRPC)  │       │
    │               └───────────┘      └──────────┘       │
    └─────────────────────────────────────────────────────┘
           ▲ OTLP (4317/4318)               ▲ query
           │                                 │
    ┌──────┴──────┐                    ┌────┴────┐
-   │ OTel        │                    │ Grafana │
+   │ 🧰 OTel     │                    │ 📈 Grafana│
    │ Collector   │                    └─────────┘
    └─────────────┘
           ▲
@@ -304,14 +299,14 @@ helm upgrade --install tempo grafana/tempo \
 
     <!-- SECTION 6: OPENTELEMETRY COLLECTOR -->
     <section class="module-section" id="otel">
-      <div class="module-header"><div class="module-badge">6</div><div class="module-meta"><h2>OpenTelemetry Collector</h2><div class="module-desc">What, why, architecture, components, and AKS deployment</div></div></div>
+      <div class="module-header"><div class="module-badge">6</div><div class="module-meta"><h2>🧰 OpenTelemetry Collector</h2><div class="module-desc">What, why, architecture, components, and AKS deployment</div></div></div>
       <div class="card"><div class="card-title">📖 What is OpenTelemetry Collector?</div><p>A vendor‑agnostic agent that receives telemetry data (OTLP), processes it (batch, filter, transform), and exports to multiple backends (Prometheus, Loki, Tempo).</p></div>
       <div class="card"><div class="card-title">🎯 Why we need it</div><p>Decouples instrumentation from backend. You can change backends without modifying application code. Also provides tail‑based sampling, batching, and retries.</p></div>
-      <div class="card"><div class="card-title">🏗️ Architecture & Components</div>
+      <div class="card"><div class="card-title">🏗️ Architecture & Components <span class="tool-icon">🧰</span></div>
         <div class="diagram-block" style="margin-top:12px">
           <pre>
    ┌─────────────────────────────────────────────────────┐
-   │              OpenTelemetry Collector                │
+   │            🧰 OpenTelemetry Collector                │
    │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │
    │  │ Receivers│→ │Processors│→ │   Exporters      │   │
    │  │ OTLP,    │  │ batch,   │  │ Prometheus,      │   │
@@ -323,7 +318,7 @@ helm upgrade --install tempo grafana/tempo \
           │                            ▼
    ┌──────┴──────┐            ┌────────┴────────┐
    │ Instrumented│            │ Backends        │
-   │ application │            │ Prom/Loki/Tempo │
+   │ application │            │ 📊📜⏱️          │
    └─────────────┘            └─────────────────┘
           </pre>
         </div>
@@ -362,7 +357,7 @@ helm upgrade --install otel-collector open-telemetry/opentelemetry-collector \
 
     <!-- SECTION 7: GRAFANA + CORRELATION -->
     <section class="module-section" id="grafana">
-      <div class="module-header"><div class="module-badge">7</div><div class="module-meta"><h2>Grafana & Trace‑Log Correlation</h2><div class="module-desc">Unified UI, datasources, and derived fields</div></div></div>
+      <div class="module-header"><div class="module-badge">7</div><div class="module-meta"><h2>📈 Grafana & Trace‑Log Correlation</h2><div class="module-desc">Unified UI, datasources, and derived fields</div></div></div>
       <div class="card"><div class="card-title">📖 What is Grafana?</div><p>Open‑source analytics and visualisation platform. Connects to multiple data sources (Prometheus, Loki, Tempo) and renders dashboards.</p></div>
       <div class="card"><div class="card-title">🎯 Why we need it</div><p>Single pane of glass for metrics, logs, and traces. Correlate a metric spike → logs with TraceID → full trace waterfall – drastically reduces MTTR.</p></div>
       <div class="card"><div class="card-title">🔗 Trace‑Log correlation (Derived Fields)</div><p>When a log line contains a TraceID, Grafana can automatically create a link to the corresponding trace in Tempo. This is the killer feature of the stack.</p></div>
@@ -377,7 +372,7 @@ kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80</co
 
     <!-- SECTION 8: AKS PREREQS -->
     <section class="module-section" id="prereqs">
-      <div class="module-header"><div class="module-badge">8</div><div class="module-meta"><h2>AKS Prerequisites & Workload Identity</h2><div class="module-desc">Azure setup, managed identities, roles</div></div></div>
+      <div class="module-header"><div class="module-badge">8</div><div class="module-meta"><h2>☁️ AKS Prerequisites & Workload Identity</h2><div class="module-desc">Azure setup, managed identities, roles</div></div></div>
       <div class="callout warning">⚠️ <strong>Cost warning:</strong> AKS, storage accounts, identities incur costs. Delete when done.</div>
       <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">az login
 az group create --name myRG --location eastus
@@ -418,7 +413,7 @@ kubectl annotate serviceaccount -n tempo tempo azure.workload.identity/client-id
 
     <!-- SECTION 10: SAMPLE INSTRUMENTED APP -->
     <section class="module-section" id="sampleapp">
-      <div class="module-header"><div class="module-badge">10</div><div class="module-meta"><h2>Sample instrumented Flask app</h2><div class="module-desc">Python + OpenTelemetry → traces and logs</div></div></div>
+      <div class="module-header"><div class="module-badge">10</div><div class="module-meta"><h2>🐍 Sample instrumented Flask app</h2><div class="module-desc">Python + OpenTelemetry → traces and logs</div></div></div>
       <div class="code-wrapper"><div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-python"># app.py – full OpenTelemetry instrumentation
 from flask import Flask
 from opentelemetry import trace
@@ -492,7 +487,7 @@ spec:
 
     <!-- SECTION 11: CLEANUP -->
     <section class="module-section" id="cleanup">
-      <div class="module-header"><div class="module-badge">11</div><div class="module-meta"><h2>Complete cleanup – avoid costs</h2><div class="module-desc">Remove every resource created</div></div></div>
+      <div class="module-header"><div class="module-badge">11</div><div class="module-meta"><h2>🧹 Complete cleanup – avoid costs</h2><div class="module-desc">Remove every resource created</div></div></div>
       <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">helm uninstall kube-prometheus-stack -n monitoring
 helm uninstall loki -n loki
 helm uninstall tempo -n tempo
@@ -505,15 +500,15 @@ az identity delete -g myRG -n tempo-storage-id
 az group delete -n myRG --yes --no-wait</code></pre></div>
     </section>
 
-    <!-- SECTION: HANDS-ON LABS -->
+    <!-- HANDS-ON LABS -->
     <section class="module-section" id="labs">
-      <div class="module-header"><div class="module-badge">★</div><div class="module-meta"><h2>Hands‑on labs for interns</h2><div class="module-desc">Learn by doing</div></div></div>
+      <div class="module-header"><div class="module-badge">★</div><div class="module-meta"><h2>🧪 Hands‑on labs for interns</h2><div class="module-desc">Learn by doing</div></div></div>
       <div class="qa-section"><div class="qa-header">🎓 Lab 1: Metric spike investigation</div><div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Run nginx: <code>kubectl run nginx --image=nginx</code>. 2. Install stress: <code>kubectl exec -it nginx -- bash -c "apt update && apt install -y stress && stress --cpu 2"</code>. 3. In Grafana, query <code>rate(container_cpu_usage_seconds_total{pod="nginx"}[5m])</code>. 4. Observe spike. 5. Correlate with Loki logs.</div></div></div>
       <div class="qa-section"><div class="qa-header">🎓 Lab 2: Trace a slow request</div><div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Deploy Flask app. 2. Run load: <code>hey -z 30s -c 5 http://flask-app/slow</code>. 3. In Grafana Explore → Tempo → search traces with latency > 1s. 4. Open trace – see slow span. 5. Click derived field to view log.</div></div></div>
       <div class="callout lab">🧪 <strong>Final project:</strong> Set up the full stack, instrument a two‑service app, build a Grafana dashboard with RED metrics, Loki logs panel, and Tempo trace view.</div>
     </section>
 
-    <!-- WHAT YOU SHOULD KNOW -->
+    <!-- EXPECTATIONS -->
     <section class="module-section" id="expectations">
       <div class="module-header"><div class="module-badge">✓</div><div class="module-meta"><h2>What you should know & demonstrate</h2><div class="module-desc">Intern / aspiring SRE expectations</div></div></div>
       <div class="card-grid">
