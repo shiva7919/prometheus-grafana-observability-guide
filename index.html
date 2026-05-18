@@ -1,738 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Observability for SREs | Prometheus · Loki · Tempo · OpenTelemetry</title>
-<!-- Apple-style fonts & minimal reset -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=SF+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  background: #ffffff;
-  color: #1d1d1f;
-  line-height: 1.5;
-  scroll-behavior: smooth;
-}
-
-/* progress bar – subtle */
-#progress-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 3px;
-  background: #0071e3;
-  width: 0%;
-  z-index: 1000;
-  transition: width 0.1s ease;
-  box-shadow: 0 0 3px rgba(0,113,227,0.5);
-}
-
-/* Sidebar – light mode Apple style */
-#sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 280px;
-  height: 100vh;
-  background: #fafafc;
-  border-right: 1px solid #e9e9ef;
-  overflow-y: auto;
-  z-index: 100;
-  backdrop-filter: blur(10px);
-  font-size: 14px;
-}
-
-.sidebar-logo {
-  padding: 28px 24px 20px;
-  border-bottom: 1px solid #e9e9ef;
-}
-
-.logo-icon {
-  font-size: 28px;
-  margin-bottom: 8px;
-}
-
-.logo-text {
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: -0.3px;
-  background: linear-gradient(135deg, #1d1d1f, #0071e3);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.sidebar-subtitle {
-  font-size: 12px;
-  color: #6e6e73;
-  margin-top: 4px;
-}
-
-.sidebar-search {
-  padding: 16px 20px;
-}
-
-.sidebar-search input {
-  width: 100%;
-  padding: 8px 14px;
-  background: #fff;
-  border: 1px solid #d2d2d7;
-  border-radius: 10px;
-  font-size: 13px;
-  font-family: inherit;
-  outline: none;
-  transition: 0.2s;
-}
-
-.sidebar-search input:focus {
-  border-color: #0071e3;
-  box-shadow: 0 0 0 2px rgba(0,113,227,0.2);
-}
-
-.sidebar-nav {
-  padding: 8px 0 20px;
-}
-
-.nav-section-label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #6e6e73;
-  padding: 16px 20px 6px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 20px;
-  text-decoration: none;
-  color: #1d1d1f;
-  font-weight: 500;
-  border-left: 3px solid transparent;
-  transition: all 0.2s;
-}
-
-.nav-item:hover {
-  background: #f5f5f7;
-}
-
-.nav-item.active {
-  border-left-color: #0071e3;
-  background: #f5f5f7;
-  color: #0071e3;
-}
-
-.nav-num {
-  width: 24px;
-  height: 24px;
-  background: #e8e8ed;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #1d1d1f;
-}
-
-.nav-item.active .nav-num {
-  background: #0071e3;
-  color: white;
-}
-
-.sidebar-footer {
-  font-size: 11px;
-  padding: 20px;
-  border-top: 1px solid #e9e9ef;
-  color: #86868b;
-}
-
-/* MAIN CONTENT */
-#main {
-  margin-left: 280px;
-  min-height: 100vh;
-}
-
-#topbar {
-  position: sticky;
-  top: 0;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid #e9e9ef;
-  padding: 0 40px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 90;
-}
-
-.topbar-title {
-  font-weight: 600;
-  font-size: 17px;
-  letter-spacing: -0.2px;
-}
-
-.topbar-pills {
-  display: flex;
-  gap: 8px;
-}
-
-.pill {
-  padding: 5px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  background: #f2f2f5;
-  color: #1d1d1f;
-}
-
-/* Hero – Apple style */
-.hero {
-  padding: 60px 40px 48px;
-  background: #ffffff;
-  border-bottom: 1px solid #e9e9ef;
-}
-
-.hero-eyebrow {
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #0071e3;
-  margin-bottom: 12px;
-}
-
-.hero h1 {
-  font-size: 48px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, #1d1d1f, #0071e3);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.hero-desc {
-  font-size: 18px;
-  color: #424245;
-  max-width: 620px;
-  margin-bottom: 32px;
-}
-
-.hero-stats {
-  display: flex;
-  gap: 40px;
-}
-
-.hero-stat .val {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1d1d1f;
-}
-
-.hero-stat .lbl {
-  font-size: 13px;
-  color: #6e6e73;
-}
-
-/* content */
-.content {
-  padding: 0 40px 80px;
-  max-width: 1100px;
-}
-
-.module-section {
-  padding-top: 60px;
-}
-
-.module-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.module-badge {
-  width: 54px;
-  height: 54px;
-  background: #0071e3;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 24px;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0,113,227,0.2);
-}
-
-.module-meta h2 {
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  margin-bottom: 4px;
-}
-
-.module-desc {
-  font-size: 16px;
-  color: #424245;
-}
-
-.module-tags {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.tag {
-  background: #f2f2f5;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-/* Cards */
-.card {
-  background: #ffffff;
-  border: 1px solid #e9e9ef;
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 24px;
-  transition: all 0.2s;
-}
-
-.card:hover {
-  box-shadow: 0 8px 20px rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.card-title {
-  font-weight: 700;
-  font-size: 18px;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin: 20px 0;
-}
-
-/* diagrams – light theme */
-.diagram-block {
-  background: #f9f9fb;
-  border: 1px solid #e9e9ef;
-  border-radius: 16px;
-  padding: 20px;
-  font-family: 'SF Mono', monospace;
-  font-size: 12px;
-  overflow-x: auto;
-  margin: 20px 0;
-  color: #1d1d1f;
-}
-
-.diagram-label {
-  font-weight: 600;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #0071e3;
-  margin-bottom: 12px;
-}
-
-/* code blocks */
-.code-wrapper {
-  margin: 20px 0;
-  border-radius: 14px;
-  border: 1px solid #e9e9ef;
-  overflow: hidden;
-  background: #fafafc;
-}
-
-.code-header {
-  background: #f2f2f5;
-  padding: 10px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #e9e9ef;
-}
-
-.code-lang {
-  font-size: 11px;
-  font-weight: 600;
-  color: #0071e3;
-}
-
-.copy-btn {
-  background: white;
-  border: 1px solid #d2d2d7;
-  border-radius: 8px;
-  padding: 4px 12px;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.copy-btn:hover {
-  border-color: #0071e3;
-  color: #0071e3;
-}
-
-pre code.hljs {
-  background: #fafafc;
-  padding: 18px !important;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-/* tables */
-.table-wrap {
-  overflow-x: auto;
-  border-radius: 16px;
-  border: 1px solid #e9e9ef;
-  margin: 20px 0;
-}
-
-th {
-  background: #f5f5f7;
-  padding: 12px 16px;
-  font-weight: 600;
-  font-size: 13px;
-}
-
-td {
-  padding: 12px 16px;
-  border-top: 1px solid #e9e9ef;
-  font-size: 14px;
-}
-
-/* callouts */
-.callout {
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin: 20px 0;
-  display: flex;
-  gap: 12px;
-  background: #f9f9fb;
-  border-left: 4px solid #0071e3;
-}
-
-.callout.tip { border-left-color: #34c759; background: #f0faf0; }
-.callout.lab { border-left-color: #af52de; background: #f8f0fc; }
-.callout.info { border-left-color: #0071e3; background: #f0f5ff; }
-
-/* Q&A */
-.qa-section {
-  background: #ffffff;
-  border: 1px solid #e9e9ef;
-  border-radius: 20px;
-  overflow: hidden;
-  margin: 30px 0;
-}
-
-.qa-header {
-  background: #f5f5f7;
-  padding: 16px 20px;
-  font-weight: 600;
-  border-bottom: 1px solid #e9e9ef;
-}
-
-.qa-q {
-  width: 100%;
-  text-align: left;
-  padding: 14px 20px;
-  background: none;
-  border: none;
-  font-weight: 500;
-  font-family: inherit;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  border-top: 1px solid #e9e9ef;
-}
-
-.qa-q-icon svg {
-  width: 10px;
-  fill: #6e6e73;
-  transition: transform 0.2s;
-}
-
-.qa-item.open .qa-q-icon svg {
-  transform: rotate(90deg);
-}
-
-.qa-a {
-  padding: 0 20px 0 52px;
-  max-height: 0;
-  overflow: hidden;
-  transition: all 0.3s;
-  color: #424245;
-  font-size: 14px;
-}
-
-.qa-item.open .qa-a {
-  max-height: 400px;
-  padding: 0 20px 20px 52px;
-}
-
-/* cheat section */
-.cheat-section {
-  background: #fafafc;
-  border-radius: 24px;
-  padding: 28px;
-  margin: 20px 0;
-  border: 1px solid #e9e9ef;
-}
-
-/* back to top */
-#back-top {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: #0071e3;
-  border: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 44px;
-  color: white;
-  font-size: 20px;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  z-index: 200;
-}
-
-#back-top.visible { opacity: 1; }
-
-/* responsive */
-@media (max-width: 768px) {
-  #sidebar { transform: translateX(-280px); transition: 0.2s; }
-  #main { margin-left: 0; }
-  .hero h1 { font-size: 32px; }
-  .content { padding: 0 20px 60px; }
-  .hero { padding: 40px 20px; }
-  #topbar { padding: 0 20px; }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Observability for SREs | Intern’s Guide to Prometheus, Loki, Tempo, OpenTelemetry on AKS</title>
+  <!-- Apple-style fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=SF+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: #ffffff;
+      color: #1d1d1f;
+      line-height: 1.5;
+      scroll-behavior: smooth;
+    }
+    /* progress bar */
+    #progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: #0071e3;
+      width: 0%;
+      z-index: 1000;
+      transition: width 0.1s;
+    }
+    /* sidebar */
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100vh;
+      background: #fafafc;
+      border-right: 1px solid #e9e9ef;
+      overflow-y: auto;
+      z-index: 100;
+      font-size: 14px;
+    }
+    .sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid #e9e9ef; }
+    .logo-icon { font-size: 28px; margin-bottom: 6px; }
+    .logo-text { font-weight: 700; font-size: 18px; letter-spacing: -0.3px; background: linear-gradient(135deg, #1d1d1f, #0071e3); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .sidebar-subtitle { font-size: 12px; color: #6e6e73; margin-top: 4px; }
+    .sidebar-search { padding: 16px 20px; }
+    .sidebar-search input { width: 100%; padding: 8px 14px; background: #fff; border: 1px solid #d2d2d7; border-radius: 10px; font-size: 13px; outline: none; }
+    .sidebar-search input:focus { border-color: #0071e3; box-shadow: 0 0 0 2px rgba(0,113,227,0.2); }
+    .sidebar-nav { padding: 8px 0 20px; }
+    .nav-section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6e6e73; padding: 16px 20px 6px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 8px 20px; text-decoration: none; color: #1d1d1f; font-weight: 500; border-left: 3px solid transparent; transition: 0.2s; }
+    .nav-item:hover { background: #f5f5f7; }
+    .nav-item.active { border-left-color: #0071e3; background: #f5f5f7; color: #0071e3; }
+    .nav-num { width: 24px; height: 24px; background: #e8e8ed; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+    .nav-item.active .nav-num { background: #0071e3; color: white; }
+    .sidebar-footer { font-size: 11px; padding: 20px; border-top: 1px solid #e9e9ef; color: #86868b; }
+
+    /* main content */
+    #main { margin-left: 280px; min-height: 100vh; }
+    #topbar { position: sticky; top: 0; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #e9e9ef; padding: 0 40px; height: 64px; display: flex; align-items: center; justify-content: space-between; z-index: 90; }
+    .topbar-title { font-weight: 600; font-size: 17px; }
+    .pill { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #f2f2f5; margin-left: 8px; }
+    .hero { padding: 60px 40px 48px; border-bottom: 1px solid #e9e9ef; background: #ffffff; }
+    .hero-eyebrow { font-size: 14px; font-weight: 600; text-transform: uppercase; color: #0071e3; margin-bottom: 12px; }
+    .hero h1 { font-size: 48px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 20px; background: linear-gradient(135deg, #1d1d1f, #0071e3); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero-desc { font-size: 18px; color: #424245; max-width: 620px; margin-bottom: 32px; }
+    .content { padding: 0 40px 80px; max-width: 1100px; }
+    .module-section { padding-top: 60px; }
+    .module-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 32px; }
+    .module-badge { width: 54px; height: 54px; background: #0071e3; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; color: white; box-shadow: 0 4px 12px rgba(0,113,227,0.2); }
+    .module-meta h2 { font-size: 30px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
+    .module-desc { font-size: 16px; color: #424245; }
+    .tag { background: #f2f2f5; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; margin-right: 8px; }
+    .card { background: #ffffff; border: 1px solid #e9e9ef; border-radius: 20px; padding: 24px; margin-bottom: 24px; transition: 0.2s; }
+    .card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.05); }
+    .card-title { font-weight: 700; font-size: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 20px 0; }
+    .diagram-block { background: #f9f9fb; border: 1px solid #e9e9ef; border-radius: 16px; padding: 20px; font-family: 'SF Mono', monospace; font-size: 12px; overflow-x: auto; margin: 20px 0; }
+    .code-wrapper { margin: 20px 0; border-radius: 14px; border: 1px solid #e9e9ef; overflow: hidden; background: #fafafc; }
+    .code-header { background: #f2f2f5; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e9e9ef; }
+    .code-lang { font-size: 11px; font-weight: 600; color: #0071e3; }
+    .copy-btn { background: white; border: 1px solid #d2d2d7; border-radius: 8px; padding: 4px 12px; font-size: 11px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+    .copy-btn:hover { border-color: #0071e3; color: #0071e3; }
+    pre code.hljs { background: #fafafc; padding: 18px !important; font-size: 13px; }
+    .callout { border-radius: 16px; padding: 16px 20px; margin: 20px 0; display: flex; gap: 12px; border-left: 4px solid #0071e3; background: #f0f5ff; }
+    .callout.tip { border-left-color: #34c759; background: #f0faf0; }
+    .callout.lab { border-left-color: #af52de; background: #f8f0fc; }
+    .table-wrap { overflow-x: auto; border-radius: 16px; border: 1px solid #e9e9ef; margin: 20px 0; }
+    th { background: #f5f5f7; padding: 12px 16px; font-weight: 600; }
+    td { padding: 12px 16px; border-top: 1px solid #e9e9ef; }
+    .qa-section { background: #ffffff; border: 1px solid #e9e9ef; border-radius: 20px; overflow: hidden; margin: 30px 0; }
+    .qa-header { background: #f5f5f7; padding: 16px 20px; font-weight: 600; }
+    .qa-q { width: 100%; text-align: left; padding: 14px 20px; background: none; border: none; font-weight: 500; display: flex; align-items: center; gap: 12px; cursor: pointer; border-top: 1px solid #e9e9ef; }
+    .qa-q-icon svg { width: 10px; fill: #6e6e73; transition: transform 0.2s; }
+    .qa-item.open .qa-q-icon svg { transform: rotate(90deg); }
+    .qa-a { padding: 0 20px 0 52px; max-height: 0; overflow: hidden; transition: 0.3s; color: #424245; font-size: 14px; }
+    .qa-item.open .qa-a { max-height: 400px; padding: 0 20px 20px 52px; }
+    #back-top { position: fixed; bottom: 24px; right: 24px; background: #0071e3; border: none; width: 44px; height: 44px; border-radius: 44px; color: white; font-size: 20px; cursor: pointer; opacity: 0; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    #back-top.visible { opacity: 1; }
+    @media (max-width: 768px) { #sidebar { transform: translateX(-280px); transition: 0.2s; } #main { margin-left: 0; } .hero h1 { font-size: 32px; } .content { padding: 0 20px 60px; } }
+  </style>
 </head>
 <body>
-<div id="progress-bar"></div>
+<div id="progress"></div>
 <nav id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">🔭</div>
     <div class="logo-text">observability<span style="font-weight:400">.sre</span></div>
-    <div class="sidebar-subtitle">Prometheus · Loki · Tempo · OTel</div>
+    <div class="sidebar-subtitle">Intern's guide · AKS edition</div>
   </div>
-  <div class="sidebar-search"><input type="text" id="search-input" placeholder="Search topics..." oninput="filterNav(this.value)"></div>
+  <div class="sidebar-search"><input type="text" id="search" placeholder="Search topics..." oninput="filterNav(this.value)"></div>
   <div class="sidebar-nav">
     <div class="nav-section-label">Foundations</div>
-    <a class="nav-item" href="#intro"><span class="nav-num">1</span>Observability for SRE</a>
-    <a class="nav-item" href="#prometheus"><span class="nav-num">2</span>Prometheus Metrics</a>
-    <a class="nav-item" href="#promql"><span class="nav-num">3</span>PromQL & Recording</a>
-    <a class="nav-item" href="#alerting"><span class="nav-num">4</span>Alerting & Alertmanager</a>
-    <div class="nav-section-label">Logs & Traces</div>
-    <a class="nav-item" href="#loki"><span class="nav-num">5</span>Loki – Log Aggregation</a>
-    <a class="nav-item" href="#tempo"><span class="nav-num">6</span>Tempo – Tracing</a>
-    <div class="nav-section-label">Unified Pipeline</div>
-    <a class="nav-item" href="#opentelemetry"><span class="nav-num">7</span>OpenTelemetry</a>
-    <div class="nav-section-label">Practice</div>
-    <a class="nav-item" href="#cheatsheet"><span class="nav-num">★</span>SRE Labs & Cheats</a>
+    <a class="nav-item" href="#intro"><span class="nav-num">1</span>Observability basics</a>
+    <a class="nav-item" href="#prometheus"><span class="nav-num">2</span>Prometheus (metrics)</a>
+    <a class="nav-item" href="#loki"><span class="nav-num">3</span>Loki (logs)</a>
+    <a class="nav-item" href="#tempo"><span class="nav-num">4</span>Tempo (traces)</a>
+    <a class="nav-item" href="#otel"><span class="nav-num">5</span>OpenTelemetry</a>
+    <a class="nav-item" href="#grafana"><span class="nav-num">6</span>Grafana & Alerting</a>
+    <div class="nav-section-label">AKS Setup</div>
+    <a class="nav-item" href="#setup"><span class="nav-num">7</span>Deploy on AKS</a>
+    <a class="nav-item" href="#cleanup"><span class="nav-num">8</span>Cleanup & Delete</a>
+    <div class="nav-section-label">Labs</div>
+    <a class="nav-item" href="#labs"><span class="nav-num">★</span>Hands‑on labs</a>
   </div>
-  <div class="sidebar-footer">Production-ready observability · 7‑day journey</div>
+  <div class="sidebar-footer">Azure Kubernetes Service · OpenTelemetry · 2025</div>
 </nav>
 <div id="main">
   <div id="topbar">
-    <div class="topbar-title">📡 SRE Observability Stack</div>
-    <div class="topbar-pills"><span class="pill">Prometheus</span><span class="pill">Loki</span><span class="pill">Tempo</span><span class="pill">OpenTelemetry</span></div>
+    <div class="topbar-title">📡 SRE observability stack</div>
+    <div><span class="pill">Prometheus</span><span class="pill">Loki</span><span class="pill">Tempo</span><span class="pill">OTel</span></div>
   </div>
   <div class="hero">
-    <div class="hero-eyebrow">for Site Reliability Engineering</div>
-    <h1>Metrics · Logs · Traces<br>Unified in Grafana</h1>
-    <p class="hero-desc">Deep‑dive into production observability: from PromQL to OpenTelemetry collector, with SRE best practices on cardinality, SLIs, and cost‑efficient logging.</p>
-    <div class="hero-stats"><div class="hero-stat"><span class="val">3</span><div class="lbl">pillars</div></div><div class="hero-stat"><span class="val">4</span><div class="lbl">backends</div></div><div class="hero-stat"><span class="val">1</span><div class="lbl">Grafana UI</div></div></div>
+    <div class="hero-eyebrow">for interns & junior SREs</div>
+    <h1>Metrics · Logs · Traces <br>on AKS</h1>
+    <p class="hero-desc">Understand what, why, where, and how to implement the modern observability stack. Full end‑to‑end guide with setup, deletion, and real‑world labs.</p>
   </div>
   <div class="content">
-    <!-- SECTION 1: INTRO -->
+    <!-- ========== INTRO ========== -->
     <section class="module-section" id="intro">
-      <div class="module-header"><div class="module-badge">1</div><div class="module-meta"><h2>Observability from an SRE perspective</h2><div class="module-desc">Beyond monitoring: SLIs, SLOs, error budgets, and why the three pillars matter.</div><div class="module-tags"><span class="tag">SRE</span><span class="tag">SLI</span><span class="tag">Observability</span></div></div></div>
+      <div class="module-header"><div class="module-badge">1</div><div class="module-meta"><h2>Observability – why it matters</h2><div class="module-desc">What is it? Why do we need it? Where is it used?</div></div></div>
       <div class="card-grid">
-        <div class="card"><div class="card-title">📈 Monitoring vs Observability</div><p>Monitoring tells you <strong>what</strong> is broken (e.g., CPU > 90%). Observability lets you explore <strong>why</strong> using metrics, logs, and traces. SREs need both: dashboards for SLIs and exploratory debugging for incidents.</p></div>
-        <div class="card"><div class="card-title">🎯 SLIs & SLOs</div><p>Service Level Indicators (e.g., latency, error rate) are measured via Prometheus. Service Level Objectives define acceptable thresholds. Error budget = 1 - SLO. Alerting should burn error budget, not every spike.</p></div>
-        <div class="card"><div class="card-title">🔄 Kubernetes complexity</div><p>Ephemeral pods, dynamic scheduling, and sidecar containers increase cardinality. Prometheus service discovery & relabeling are mandatory. Loki’s label‑only indexing reduces log cost dramatically.</p></div>
+        <div class="card"><div class="card-title">🔍 What is observability?</div><p>The ability to understand the internal state of a system by looking at its external outputs (metrics, logs, traces). Not just monitoring – it lets you ask <strong>unknown</strong> questions about failures.</p></div>
+        <div class="card"><div class="card-title">🎯 Why SREs need it</div><p>To reduce Mean Time To Detection (MTTD) and Mean Time To Resolution (MTTR). Observability helps you pinpoint the root cause of a slowdown or outage without guessing.</p></div>
+        <div class="card"><div class="card-title">🏢 Where used</div><p>Every production Kubernetes cluster, microservices architecture, and cloud environment. Essential for incident response, capacity planning, and performance tuning.</p></div>
       </div>
-      <div class="callout tip">💡 <strong>Key SRE takeaway:</strong> Instrumentation is a design requirement. Use RED (Rate, Errors, Duration) for services and USE (Utilization, Saturation, Errors) for resources.</div>
+      <div class="callout tip">💡 <strong>Key takeaway</strong>: Observability is a <em>design property</em> – you must instrument your code and infrastructure from the beginning.</div>
     </section>
 
-    <div class="divider" style="height:1px; background:#e9e9ef; margin:40px 0;"></div>
-
-    <!-- SECTION 2: PROMETHEUS METRICS -->
+    <!-- ========== PROMETHEUS ========== -->
     <section class="module-section" id="prometheus">
-      <div class="module-header"><div class="module-badge">2</div><div class="module-meta"><h2>Prometheus Metrics & Exporters</h2><div class="module-desc">Pull model, metric types, label cardinality, and exporters for Kubernetes.</div></div></div>
-      <p>Prometheus scrapes metrics from targets (services, pods, nodes) at regular intervals. Each metric is a time‑series identified by a name and key‑value labels. <strong>High cardinality</strong> (e.g., <code>user_id</code>) kills performance – never use unbounded labels.</p>
-      <div class="table-wrap">
-        <table><thead><th>Metric type</th><th>Use case</th><th>Example</th></thead>
-        <tbody><tr><td>Counter</td><td>Only increases (requests, errors)</td><td><code>http_requests_total</code> + <code>rate()</code></td></tr>
-        <tr><td>Gauge</td><td>Up/down values (memory, connections)</td><td><code>go_goroutines</code></td></tr>
-        <tr><td>Histogram</td><td>Latency, request size (buckets + sum + count)</td><td><code>histogram_quantile(0.99, ...)</code></td></tr>
-        <tr><td>Summary</td><td>Client‑side quantiles (not aggregatable)</td><td>rarely used in SRE practice</td></tr>
-        </tbody>
-      </div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml"># Prometheus scrape config with relabeling to drop high‑cardinality labels
-scrape_configs:
-- job_name: 'kubernetes-pods'
-  relabel_configs:
-    - source_labels: [__meta_kubernetes_pod_label_app]
-      action: keep
-      regex: 'myapp'
-    - action: labeldrop
-      regex: 'pod_uid|container_id'   # drop high‑cardinality labels</code></pre></div>
-      <div class="callout info">📌 <strong>SRE note:</strong> Use <code>prometheus_tsdb_head_series</code> metric to monitor cardinality. Aim for &lt; 500k series per Prometheus instance.</div>
+      <div class="module-header"><div class="module-badge">2</div><div class="module-meta"><h2>Prometheus – Metrics</h2><div class="module-desc">What, why, where, and how to implement on AKS</div></div></div>
+      <p><strong>What it is:</strong> Open‑source time‑series database and monitoring system. Pulls metrics from targets (pods, nodes, services) and stores them as labelled data points.<br><strong>Why needed:</strong> Metrics tell you the health of your system – CPU, memory, request rate, error count. Without metrics, you're flying blind.<br><strong>Where used:</strong> Inside every Kubernetes cluster, often as the primary data source for dashboards and alerts.</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Install kube-prometheus-stack on AKS (full monitoring suite)
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+  --namespace monitoring --create-namespace \
+  --set grafana.service.type=LoadBalancer \
+  --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.storageClassName=managed-premium \
+  --set prometheus.prometheusSpec.retention=15d</code></pre></div>
+      <p><strong>How to delete:</strong></p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">helm uninstall kube-prometheus-stack -n monitoring
+kubectl delete ns monitoring</code></pre></div>
     </section>
 
-    <div class="divider" style="height:1px; background:#e9e9ef; margin:40px 0;"></div>
-
-    <!-- SECTION 3: PROMQL -->
-    <section class="module-section" id="promql">
-      <div class="module-header"><div class="module-badge">3</div><div class="module-meta"><h2>PromQL & Recording Rules</h2><div class="module-desc">Master rate, irate, histogram_quantile, aggregation, and rule optimisation.</div></div></div>
-      <div class="card-grid">
-        <div class="card"><div class="card-title">⚡ Rate vs irate</div><p><code>rate()</code> averages over the full range – smooth, good for SLO burn alerts. <code>irate()</code> uses last two points – detects spikes, but noisy. Prefer <code>rate()</code> for most SRE work.</p></div>
-        <div class="card"><div class="card-title">📊 Histogram quantile</div><p><code>histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))</code> computes 99th percentile latency – essential for SLIs.</p></div>
-        <div class="card"><div class="card-title">🎛️ Recording rules</div><p>Pre‑compute expensive expressions (e.g., per‑pod CPU) into <code>namespace:pod:cpu_usage</code>. Reduces dashboard load and alert latency. Use naming convention <code>level:metric:operations</code>.</p></div>
-      </div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml">groups:
-- name: slo_recording
-  rules:
-  - record: service:request_error_rate:rate5m
-    expr: sum by (service) (rate(http_requests_total{status=~"5.."}[5m]))
-  - record: service:request_rate:rate5m
-    expr: sum by (service) (rate(http_requests_total[5m]))</code></pre></div>
-    </section>
-
-    <div class="divider"></div>
-
-    <!-- SECTION 4: ALERTING -->
-    <section class="module-section" id="alerting">
-      <div class="module-header"><div class="module-badge">4</div><div class="module-meta"><h2>Alerting & Alertmanager</h2><div class="module-desc">SLO error budget alerts, grouping, inhibition, and notification routing.</div></div></div>
-      <p>Alertmanager deduplicates, groups, and routes alerts. For SRE, implement <strong>multi‑window multi‑burn‑rate</strong> alerts for SLOs – detect rapid error budget consumption while avoiding flapping.</p>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml">- alert: HighErrorBudgetBurn
-  expr: (1 - (sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])))) &lt; 0.99
-  for: 2m
-  annotations:
-    summary: "SLO violation imminent"
-    description: "Error budget burn rate > 14x in 5m window"</code></pre></div>
-      <div class="callout tip">🔔 <strong>Best practice:</strong> Use <code>group_by: ['alertname', 'cluster']</code> in Alertmanager to avoid notification storms during large outages. Set <code>repeat_interval: 6h</code>.</div>
-    </section>
-
-    <div class="divider"></div>
-
-    <!-- SECTION 5: LOKI -->
+    <!-- ========== LOKI ========== -->
     <section class="module-section" id="loki">
-      <div class="module-header"><div class="module-badge">5</div><div class="module-meta"><h2>Logging with Loki + Grafana</h2><div class="module-desc">Cost‑effective log aggregation, LogQL queries, and structured metadata.</div></div></div>
-      <p>Loki <strong>does not index log content</strong> – only labels (pod, namespace, level). This reduces storage costs by ~10x compared to Elasticsearch. Use <strong>Promtail</strong> to scrape logs and push to Loki.</p>
-      <div class="diagram-block"><span class="diagram-label">Loki architecture</span><pre>Application logs → Promtail (DaemonSet) → Loki (ingester+querier) → Grafana</pre></div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">logql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># LogQL examples:
-{namespace="production", pod=~"api-.*"} |= "ERROR" | json | level="error"
-sum by (namespace) (count_over_time({job="varlogs"} |= "panic"[5m]))
-rate({app="nginx"} |~ "5\\d\\d" [1m])  # error rate from logs</code></pre></div>
-      <div class="callout info">📎 <strong>Correlation:</strong> Use Loki’s <code>derived fields</code> to extract TraceID from logs and link to Tempo directly in Grafana.</div>
+      <div class="module-header"><div class="module-badge">3</div><div class="module-meta"><h2>Loki – Log Aggregation</h2><div class="module-desc">What, why, where, and how to set up with Azure Blob Storage</div></div></div>
+      <p><strong>What it is:</strong> Horizontally scalable, cost‑effective log aggregation system inspired by Prometheus. It indexes only metadata (labels), not the full log text.<br><strong>Why needed:</strong> Logs are essential for debugging. Traditional systems (Elasticsearch) become expensive at scale. Loki reduces storage cost by ~10x.<br><strong>Where used:</strong> Alongside Prometheus in the same cluster; logs are stored in object storage (Azure Blob).</p>
+      <div class="callout info">📌 <strong>For AKS:</strong> Loki needs Azure Blob Storage for chunks. Create a storage account and container before installing.</div>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Add Grafana Helm repo
+helm repo add grafana https://grafana.github.io/helm-charts
+# Install Loki in simple scalable mode with Azure backend
+helm upgrade --install loki grafana/loki \
+  --namespace loki --create-namespace \
+  --set loki.storage.type=azure \
+  --set loki.storage.azure.accountName=YOUR_STORAGE_ACCOUNT \
+  --set loki.storage.azure.useManagedIdentity=true \
+  --set loki.storage.azure.containerName=loki-chunks</code></pre></div>
+      <p><strong>Delete Loki:</strong></p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">helm uninstall loki -n loki
+kubectl delete ns loki</code></pre></div>
     </section>
 
-    <div class="divider"></div>
-
-    <!-- SECTION 6: TEMPO -->
+    <!-- ========== TEMPO ========== -->
     <section class="module-section" id="tempo">
-      <div class="module-header"><div class="module-badge">6</div><div class="module-meta"><h2>Distributed Tracing with Tempo</h2><div class="module-desc">Object storage‑based, OTLP ingestion, service graphs, and trace‑driven debugging.</div></div></div>
-      <p>Tempo stores traces in blocks on object storage (S3, GCS). It uses a <strong>hash of the TraceID</strong> to locate the block – no expensive indexing. Ingest via OTLP (gRPC 4317 / HTTP 4318) from OpenTelemetry SDKs.</p>
-      <div class="card-grid">
-        <div class="card"><div class="card-title">🔍 Trace search</div><div class="card-desc">Grafana Explore → Tempo → search by TraceID, tags (duration, service), or find traces from a Loki log line.</div></div>
-        <div class="card"><div class="card-title">🗺️ Service graph</div><div class="card-desc">Tempo computes a service dependency graph from span data – visualise upstream/downstream dependencies, error rates, and latency percentiles.</div></div>
-      </div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Instrument a Go service with OTel SDK
-otel.Tracer("payment").Start(ctx, "process_payment")
-defer span.End()
-// set attributes like http.method, db.statement</code></pre></div>
+      <div class="module-header"><div class="module-badge">4</div><div class="module-meta"><h2>Tempo – Distributed Tracing</h2><div class="module-desc">What, why, where, and how to implement with Azure Blob</div></div></div>
+      <p><strong>What it is:</strong> High‑scale distributed tracing backend that stores traces in object storage. Uses TraceID to retrieve full request journeys.<br><strong>Why needed:</strong> Traces show you the exact path of a request across services. When a request is slow, traces pinpoint the slowest span (e.g., a database query).<br><strong>Where used:</strong> In microservices architectures, especially when you have more than 3 services.</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># Install Tempo with Azure Blob storage backend
+helm upgrade --install tempo grafana/tempo \
+  --namespace tempo --create-namespace \
+  --set tempo.config.storage.trace.backend=azure \
+  --set tempo.config.storage.trace.azure.container_name=tempo-data \
+  --set tempo.config.storage.trace.azure.account_name=YOUR_STORAGE_ACCOUNT \
+  --set tempo.config.storage.trace.azure.use_managed_identity=true</code></pre></div>
+      <p><strong>Delete:</strong></p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash">helm uninstall tempo -n tempo
+kubectl delete ns tempo</code></pre></div>
     </section>
 
-    <div class="divider"></div>
-
-    <!-- SECTION 7: OPENTELEMETRY -->
-    <section class="module-section" id="opentelemetry">
-      <div class="module-header"><div class="module-badge">7</div><div class="module-meta"><h2>OpenTelemetry – Unified Pipeline</h2><div class="module-desc">Vendor‑agnostic SDK, OTel Collector, and exporting to Prometheus/Loki/Tempo.</div></div></div>
-      <p>OpenTelemetry provides a single set of APIs and SDKs for generating metrics, logs, and traces. The <strong>OTel Collector</strong> receives OTLP data, processes it (batch, filter, transform), and exports to multiple backends.</p>
-      <div class="diagram-block"><span class="diagram-label">Collector pipeline</span><pre>Receivers (OTLP, Jaeger, Prometheus) → Processors (memory_limiter, batch) → Exporters (Prometheus, Loki, Tempo)</pre></div>
-      <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml">receivers:
+    <!-- ========== OPENTELEMETRY ========== -->
+    <section class="module-section" id="otel">
+      <div class="module-header"><div class="module-badge">5</div><div class="module-meta"><h2>OpenTelemetry – Unified Instrumentation</h2><div class="module-desc">What, why, where, and how to configure the collector</div></div></div>
+      <p><strong>What it is:</strong> A single, vendor‑agnostic set of APIs, SDKs, and tools to generate and collect telemetry data (metrics, logs, traces).<br><strong>Why needed:</strong> Instead of using separate libraries for Prometheus (metrics), Loki (logs), and Tempo (traces), OTel gives you one way to instrument your code and forward data to any backend.<br><strong>Where used:</strong> In application code (Python, Go, Java, Node.js) and as a collector sidecar/gateway in the cluster.</p>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">yaml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-yaml"># OTel Collector configuration (configmap)
+receivers:
   otlp:
     protocols:
       grpc: { endpoint: 0.0.0.0:4317 }
+      http: { endpoint: 0.0.0.0:4318 }
+processors:
+  batch: {}
 exporters:
   prometheus: { endpoint: "0.0.0.0:8889" }
-  loki: { endpoint: "http://loki:3100/otlp" }
-  tempo: { endpoint: "tempo:4317", tls: { insecure: true } }
+  otlphttp/loki: { endpoint: "http://loki.loki.svc.cluster.local:3100/otlp" }
+  otlp/tempo: { endpoint: "tempo.tempo.svc.cluster.local:4317", tls: { insecure: true } }
 service:
   pipelines:
-    metrics: { receivers: [otlp], exporters: [prometheus] }
-    logs:    { receivers: [otlp], exporters: [loki] }
-    traces:  { receivers: [otlp], exporters: [tempo] }</code></pre></div>
-      <div class="callout lab">🧪 <strong>Lab – Full correlation:</strong> Instrument a sample app with OTel. Generate latency spike (e.g., <code>sleep</code>). In Grafana, see Prometheus metric spike → link to Loki logs with TraceID → open Tempo trace waterfall – pinpoint the exact span that slowed down.</div>
+    metrics: { receivers: [otlp], processors: [batch], exporters: [prometheus] }
+    logs:    { receivers: [otlp], processors: [batch], exporters: [otlphttp/loki] }
+    traces:  { receivers: [otlp], processors: [batch], exporters: [otlp/tempo] }</code></pre></div>
+      <p><strong>Delete Collector:</strong> <code>kubectl delete deployment otel-collector -n observability</code></p>
     </section>
 
-    <div class="divider"></div>
+    <!-- ========== GRAFANA + ALERTING ========== -->
+    <section class="module-section" id="grafana">
+      <div class="module-header"><div class="module-badge">6</div><div class="module-meta"><h2>Grafana & Alertmanager</h2><div class="module-desc">Unified dashboards, alert rules, and silences</div></div></div>
+      <p><strong>Grafana</strong> visualises metrics, logs, and traces in one place. <strong>Alertmanager</strong> handles alert deduplication, grouping, and routing (Slack, PagerDuty, email). After deploying the stack, add data sources:</p>
+      <ul><li>Prometheus: <code>http://kube-prometheus-stack-prometheus.monitoring:9090</code></li><li>Loki: <code>http://loki-gateway.loki:80</code></li><li>Tempo: <code>http://tempo-query-frontend.tempo:3200</code></li></ul>
+      <div class="callout tip">🔗 <strong>Correlation:</strong> Configure derived fields in Loki to extract TraceID and link directly to Tempo traces.</div>
+    </section>
 
-    <!-- CHEAT SHEET + LABS -->
-    <section class="module-section" id="cheatsheet">
-      <div class="module-header"><div class="module-badge">★</div><div class="module-meta"><h2>SRE cheat sheet & Hands‑on Labs</h2><div class="module-desc">PromQL recipes, Alertmanager tuning, and interview prep.</div></div></div>
-      <div class="cheat-section">
-        <h3 style="margin-bottom:16px">🔧 Essential PromQL for SRE</h3>
-        <ul><li>Error rate: <code>sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))</code></li>
-        <li>Apdex (satisfied threshold 0.5s): <code>sum(rate(http_request_duration_seconds_bucket{le="0.5"}[5m])) / sum(rate(http_request_duration_seconds_count[5m]))</code></li>
-        <li>Predicted disk full in 4h: <code>predict_linear(node_filesystem_avail_bytes[1h], 4*3600) &lt; 0</code></li></ul>
+    <!-- ========== AKS SETUP ========== -->
+    <section class="module-section" id="setup">
+      <div class="module-header"><div class="module-badge">7</div><div class="module-meta"><h2>Deploy the complete stack on AKS</h2><div class="module-desc">Step‑by‑step from zero to running</div></div></div>
+      <div class="card-grid">
+        <div class="card"><div class="card-title">📋 Prerequisites</div><ul><li>Azure CLI, kubectl, Helm installed</li><li>An Azure subscription</li><li>Workload identity enabled on AKS (for Blob access)</li></ul></div>
+        <div class="card"><div class="card-title">🏗️ Create AKS cluster</div><div class="code-wrapper" style="margin:0"><pre><code class="language-bash">az aks create -g myRG -n observability-cluster --node-count 2 --enable-workload-identity --generate-ssh-keys
+az aks get-credentials -g myRG -n observability-cluster</code></pre></div></div>
+        <div class="card"><div class="card-title">🧪 Deploy all components</div><p>Follow the installation commands in sections 2–6. The order does not matter, but install Prometheus first so Grafana is ready.</p></div>
+      </div>
+      <div class="callout lab">🧪 <strong>Lab 1: Instrument a sample app</strong><br>Deploy a simple Python Flask app with OpenTelemetry auto‑instrumentation. Send traces to Tempo and logs to Loki. Then generate load and watch the unified Grafana dashboard.</div>
+    </section>
+
+    <!-- ========== CLEANUP ========== -->
+    <section class="module-section" id="cleanup">
+      <div class="module-header"><div class="module-badge">8</div><div class="module-meta"><h2>Cleanup & Delete Everything</h2><div class="module-desc">Remove resources to avoid costs</div></div></div>
+      <div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-bash"># 1. Uninstall Helm releases
+helm uninstall kube-prometheus-stack -n monitoring
+helm uninstall loki -n loki
+helm uninstall tempo -n tempo
+# 2. Delete namespaces
+kubectl delete ns monitoring loki tempo
+# 3. Delete AKS cluster
+az aks delete -g myRG -n observability-cluster --yes
+# 4. Delete Azure Blob storage accounts (optional)
+az storage account delete -n mystorageaccount -g myRG --yes</code></pre></div>
+      <div class="callout info">💰 Always verify that no PVCs or external resources are left behind. Check Azure Portal for lingering disks.</div>
+    </section>
+
+    <!-- ========== HANDS‑ON LABS ========== -->
+    <section class="module-section" id="labs">
+      <div class="module-header"><div class="module-badge">★</div><div class="module-meta"><h2>Hands‑on labs for interns</h2><div class="module-desc">Learn by doing – realistic failure scenarios</div></div></div>
+      <div class="qa-section">
+        <div class="qa-header">🎓 Lab 1: Metric spike investigation</div>
+        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Deploy a sample nginx pod. 2. Generate CPU load: <code>kubectl exec -it nginx -- bash -c "stress --cpu 2"</code>. 3. Open Grafana → Prometheus → query <code>rate(container_cpu_usage_seconds_total[5m])</code>. 4. Observe spike. 5. Identify the pod label, correlate with logs from Loki.</div></div>
       </div>
       <div class="qa-section">
-        <div class="qa-header">❓ Top SRE interview questions</div>
-        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>How do you control cardinality in Prometheus?</button><div class="qa-a">Avoid labels with unbounded values (user_id, request_id). Use relabeling to drop or aggregate high‑cardinality labels. Set up alert on <code>prometheus_tsdb_head_series</code> exceeding threshold.</div></div>
-        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Why Loki over Elasticsearch for SRE teams?</button><div class="qa-a">Loki’s label‑only indexing reduces storage cost significantly (no full‑text index). It integrates natively with Prometheus labels – same metadata for logs and metrics. Ideal for high‑volume, multi‑tenant K8s environments.</div></div>
-        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Explain how Tempo retrieves a trace without indexing.</button><div class="qa-a">Tempo uses a <strong>deterministic hashing</strong> of TraceID to object storage keys. When you query a TraceID, it calculates the block ID range, reads the block from object storage, and scans the block to retrieve the trace. No heavy index, cheap scaling.</div></div>
-        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>What is the OpenTelemetry Collector’s role in production?</button><div class="qa-a">It decouples instrumentation from backend. You can run a collector as a sidecar or gateway to batch, retry, filter, and route telemetry. It also supports tail‑based sampling to reduce trace volume while keeping important traces (e.g., errors, slow requests).</div></div>
+        <div class="qa-header">🎓 Lab 2: Trace a slow request</div>
+        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Deploy a two‑service app (frontend + backend). 2. Instrument both with OTel. 3. Add artificial sleep in the backend. 4. Call the endpoint. 5. In Grafana → Tempo → search for traces with latency > 1s. 6. Inspect the span that consumes the most time.</div></div>
       </div>
-      <div class="callout lab">🧪 <strong>Final project:</strong> Deploy a full stack (Prometheus + Loki + Tempo + Grafana) on minikube, instrument a sample microservice with OpenTelemetry, and build a dashboard that correlates high latency → logs → traces. Use <a href="https://github.com/grafana/tempo/tree/main/example/docker-compose" target="_blank" style="color:#0071e3">Tempo’s docker-compose example</a> as reference.</div>
+      <div class="qa-section">
+        <div class="qa-header">🎓 Lab 3: SLO error budget alert</div>
+        <div class="qa-item"><button class="qa-q" onclick="toggleQA(this)"><span class="qa-q-icon"><svg viewBox="0 0 8 12"><path d="M1.5 1l5 5-5 5"/></svg></span>Steps</button><div class="qa-a">1. Create a Prometheus alert rule that fires when error rate > 5% for 2 minutes. 2. Use a load generator to produce 10% 500 errors. 3. Check Alertmanager UI (port 9093) and see the alert state change from PENDING to FIRING. 4. Configure a Slack webhook and verify notification.</div></div>
+      </div>
+      <div class="callout lab">🧪 <strong>Final project (week‑long):</strong> Set up the full AKS stack, instrument a real microservices demo (e.g., Online Boutique by Google), and build a Grafana dashboard that shows RED (Rate, Errors, Duration) for each service, plus a logs panel that filters errors, and a trace panel that links from slow requests.</div>
     </section>
   </div>
 </div>
 <button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 <script>
-  function copyCode(btn){const codeBlock=btn.closest('.code-wrapper').querySelector('code');navigator.clipboard.writeText(codeBlock.innerText);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);}
-  function toggleQA(btn){const item=btn.closest('.qa-item');const open=item.classList.contains('open');document.querySelectorAll('.qa-item').forEach(i=>i.classList.remove('open'));if(!open)item.classList.add('open');}
-  function filterNav(val){const q=val.toLowerCase();document.querySelectorAll('.nav-item').forEach(n=>{n.style.display=n.textContent.toLowerCase().includes(q)?'':'none';});}
-  document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll());
-  window.addEventListener('scroll',()=>{const percent=window.scrollY/(document.body.scrollHeight-window.innerHeight)*100;document.getElementById('progress-bar').style.width=percent+'%';document.getElementById('back-top').classList.toggle('visible',window.scrollY>300);});
-  const sections=document.querySelectorAll('.module-section');const navs=document.querySelectorAll('.nav-item');const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){navs.forEach(n=>n.classList.remove('active'));const active=document.querySelector(`.nav-item[href="#${e.target.id}"]`);if(active)active.classList.add('active');}});},{rootMargin:'-20% 0px -60% 0px'});sections.forEach(s=>obs.observe(s));
+  function copyCode(btn) { const code = btn.closest('.code-wrapper').querySelector('code'); navigator.clipboard.writeText(code.innerText); btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000); }
+  function toggleQA(btn) { const item = btn.closest('.qa-item'); const open = item.classList.contains('open'); document.querySelectorAll('.qa-item').forEach(i => i.classList.remove('open')); if (!open) item.classList.add('open'); }
+  function filterNav(q) { const lower = q.toLowerCase(); document.querySelectorAll('.nav-item').forEach(n => { n.style.display = n.textContent.toLowerCase().includes(lower) ? '' : 'none'; }); }
+  document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());
+  window.addEventListener('scroll', () => { const percent = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100; document.getElementById('progress').style.width = percent + '%'; document.getElementById('back-top').classList.toggle('visible', window.scrollY > 300); });
+  const sections = document.querySelectorAll('.module-section'); const navs = document.querySelectorAll('.nav-item'); const obs = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) { navs.forEach(n => n.classList.remove('active')); const active = document.querySelector(`.nav-item[href="#${e.target.id}"]`); if (active) active.classList.add('active'); } }); }, { rootMargin: '-20% 0px -60% 0px' }); sections.forEach(s => obs.observe(s));
 </script>
 </body>
 </html>
